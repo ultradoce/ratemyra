@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Rate My Resident Assistant - A platform for students to rate their RAs",
   "type": "module",
+  "main": "server/src/index.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
@@ -10,12 +11,17 @@
     "build": "cd client && npm run build",
     "build:all": "cd client && npm install && npm run build",
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "start": "cd server && npm start",
     "start:prod": "cd server && npm start",
     "postinstall": "cd server && npm run db:generate"
   },
   "keywords": ["ratemyra", "reviews", "resident-assistant"],
   "author": "",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
