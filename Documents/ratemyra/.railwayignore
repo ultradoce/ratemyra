@@ -8,3 +8,4 @@ node_modules
 .idea
 client/dist
 server/prisma/migrations
+Documents
