@@ -45,6 +45,7 @@ app.use(errorHandler);
 
 // Serve static files from React app in production
 if (process.env.NODE_ENV === 'production') {
+  // Path relative to server directory: go up to Documents/ratemyra, then to client/dist
   const clientPath = path.join(__dirname, '../../client/dist');
   app.use(express.static(clientPath));
   
