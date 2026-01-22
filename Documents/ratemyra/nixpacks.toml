@@ -5,12 +5,14 @@ nixPkgs = ["nodejs-18_x"]
 cmds = [
   "npm install",
   "cd server && npm install",
-  "cd ../client && npm install",
-  "cd ../server && npm run db:generate"
+  "cd ../client && npm install"
 ]
 
 [phases.build]
-cmds = ["cd client && npm run build"]
+cmds = [
+  "cd server && npx prisma generate",
+  "cd ../client && npm run build"
+]
 
 [start]
 cmd = "cd server && npm start"
