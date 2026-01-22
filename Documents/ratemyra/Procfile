@@ -1,2 +1,2 @@
-web: cd server && npm start
-release: cd server && npx prisma generate && npx prisma migrate deploy
+web: cd Documents/ratemyra/server && npm start
+release: cd Documents/ratemyra/server && npx prisma generate && npx prisma migrate deploy
