@@ -43,13 +43,16 @@ app.use('/api/admin', adminRoutes);
 
 // Serve static files from React app in production (before catch-all)
 if (process.env.NODE_ENV === 'production') {
-  // Path relative to server/src directory: go up to server, then to client/dist
-  const clientPath = path.join(__dirname, '../client/dist');
+  // Path resolution: __dirname is /app/server/src
+  // We need to go up to /app, then into client/dist
+  // So: ../../client/dist from server/src
+  const clientPath = path.join(__dirname, '../../client/dist');
   const absolutePath = path.resolve(clientPath);
   
   console.log(`🔍 Looking for client dist at: ${absolutePath}`);
   console.log(`   __dirname: ${__dirname}`);
   console.log(`   Current working directory: ${process.cwd()}`);
+  console.log(`   Resolved path: ${absolutePath}`);
   
   if (fs.existsSync(clientPath)) {
     console.log(`✅ Found client dist! Serving from: ${absolutePath}`);
