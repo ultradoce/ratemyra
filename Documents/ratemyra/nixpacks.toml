@@ -14,5 +14,10 @@ cmds = [
   "(cd client && npm run build)"
 ]
 
+[phases.release]
+cmds = [
+  "(cd server && (test -n \"$DATABASE_URL\" && npx prisma migrate deploy || echo 'Skipping migrations - DATABASE_URL not set'))"
+]
+
 [start]
 cmd = "cd server && npm start"
