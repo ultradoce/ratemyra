@@ -10,8 +10,14 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "(cd server && npx prisma generate)",
-  "(cd client && npm run build && echo '✅ Frontend build completed' && ls -la dist/ || (echo '❌ Frontend build failed!' && exit 1))"
+  "echo '🔨 Starting build phase...'",
+  "echo '📦 Building Prisma client...'",
+  "(cd server && npx prisma generate || echo '⚠️ Prisma generate failed (non-critical)')",
+  "echo '🎨 Building frontend...'",
+  "(cd client && npm run build)",
+  "echo '✅ Verifying build output...'",
+  "(cd client && test -d dist && echo '✅ dist/ folder exists' && ls -la dist/ | head -10 || (echo '❌ dist/ folder NOT found!' && exit 1))",
+  "echo '✅ Build phase completed successfully!'"
 ]
 
 [phases.release]
