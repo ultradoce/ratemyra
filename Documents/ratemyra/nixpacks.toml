@@ -3,16 +3,16 @@ nixPkgs = ["nodejs-18_x"]
 
 [phases.install]
 cmds = [
-  "cd Documents/ratemyra && npm install",
-  "cd Documents/ratemyra/server && npm install",
-  "cd Documents/ratemyra/client && npm install"
+  "npm install || true",
+  "cd server && npm install",
+  "cd ../client && npm install"
 ]
 
 [phases.build]
 cmds = [
-  "cd Documents/ratemyra/server && npx prisma generate",
-  "cd Documents/ratemyra/client && npm run build"
+  "cd server && npx prisma generate",
+  "cd ../client && npm run build"
 ]
 
 [start]
-cmd = "cd Documents/ratemyra/server && npm start"
+cmd = "cd server && npm start"
