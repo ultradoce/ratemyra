@@ -45,13 +45,42 @@ app.use(errorHandler);
 
 // Serve static files from React app in production
 if (process.env.NODE_ENV === 'production') {
-  // Path relative to server directory: go up to Documents/ratemyra, then to client/dist
-  const clientPath = path.join(__dirname, '../../client/dist');
-  app.use(express.static(clientPath));
+  // Path relative to server directory: go up to root, then to client/dist
+  const clientPath = path.join(__dirname, '../client/dist');
   
-  // Serve React app for all other routes
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(clientPath, 'index.html'));
+  // Check if client/dist exists and serve static files
+  import('fs').then((fs) => {
+    if (fs.default.existsSync(clientPath)) {
+      console.log(`📦 Serving static files from: ${clientPath}`);
+      app.use(express.static(clientPath));
+      
+      // Serve React app for all other routes (SPA routing)
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(clientPath, 'index.html'));
+      });
+    } else {
+      console.warn(`⚠️  Client dist not found at: ${clientPath}`);
+      console.warn('   Make sure frontend is built during deployment');
+      // Fallback: serve a simple message
+      app.get('/', (req, res) => {
+        res.send(`
+          <html>
+            <body style="font-family: Arial; padding: 40px; text-align: center;">
+              <h1>RateMyRA Backend Running</h1>
+              <p>Frontend not built. Check build logs.</p>
+              <p>API is available at: <a href="/api/health">/api/health</a></p>
+            </body>
+          </html>
+        `);
+      });
+      app.get('*', (req, res) => {
+        if (req.path.startsWith('/api')) {
+          res.status(404).json({ error: 'API route not found' });
+        } else {
+          res.status(404).send('Frontend not built. Check deployment logs.');
+        }
+      });
+    }
   });
 } else {
   // 404 handler for development
