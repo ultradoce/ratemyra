@@ -40,49 +40,65 @@ app.use('/api/search', searchRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Error handling middleware (must be last)
-app.use(errorHandler);
-
-// Serve static files from React app in production
+// Serve static files from React app in production (before catch-all)
 if (process.env.NODE_ENV === 'production') {
-  // Path relative to server directory: go up to root, then to client/dist
-  const clientPath = path.join(__dirname, '../client/dist');
-  
-  // Check if client/dist exists and serve static files
   import('fs').then((fs) => {
+    // Path relative to server/src directory: go up to server, then to client/dist
+    const clientPath = path.join(__dirname, '../client/dist');
+    const absolutePath = path.resolve(clientPath);
+    
+    console.log(`🔍 Looking for client dist at: ${absolutePath}`);
+    console.log(`   __dirname: ${__dirname}`);
+    
     if (fs.default.existsSync(clientPath)) {
-      console.log(`📦 Serving static files from: ${clientPath}`);
-      app.use(express.static(clientPath));
+      console.log(`✅ Found client dist! Serving from: ${absolutePath}`);
+      app.use(express.static(clientPath, { 
+        index: false, // Don't serve index.html for static files
+        extensions: ['html', 'js', 'css', 'json', 'png', 'jpg', 'svg']
+      }));
       
-      // Serve React app for all other routes (SPA routing)
-      app.get('*', (req, res) => {
-        res.sendFile(path.join(clientPath, 'index.html'));
+      // Serve React app for all non-API routes (SPA routing)
+      app.get('*', (req, res, next) => {
+        // Skip API routes
+        if (req.path.startsWith('/api')) {
+          return next();
+        }
+        res.sendFile(path.join(clientPath, 'index.html'), (err) => {
+          if (err) {
+            console.error('Error serving index.html:', err);
+            res.status(404).send('Frontend not found');
+          }
+        });
       });
     } else {
-      console.warn(`⚠️  Client dist not found at: ${clientPath}`);
+      console.warn(`⚠️  Client dist NOT found at: ${absolutePath}`);
+      console.warn('   Expected path:', absolutePath);
       console.warn('   Make sure frontend is built during deployment');
-      // Fallback: serve a simple message
+      
+      // Fallback: serve a simple message for root
       app.get('/', (req, res) => {
         res.send(`
+          <!DOCTYPE html>
           <html>
+            <head><title>RateMyRA - Backend Running</title></head>
             <body style="font-family: Arial; padding: 40px; text-align: center;">
-              <h1>RateMyRA Backend Running</h1>
-              <p>Frontend not built. Check build logs.</p>
+              <h1>RateMyRA Backend Running ✅</h1>
+              <p>Frontend not built. Check Railway build logs.</p>
               <p>API is available at: <a href="/api/health">/api/health</a></p>
+              <p>Expected dist path: ${absolutePath}</p>
             </body>
           </html>
         `);
       });
-      app.get('*', (req, res) => {
-        if (req.path.startsWith('/api')) {
-          res.status(404).json({ error: 'API route not found' });
-        } else {
-          res.status(404).send('Frontend not built. Check deployment logs.');
-        }
-      });
     }
+    
+    // Error handling middleware (must be last)
+    app.use(errorHandler);
   });
 } else {
+  // Error handling middleware (must be last)
+  app.use(errorHandler);
+  
   // 404 handler for development
   app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
