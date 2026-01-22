@@ -1,0 +1,42 @@
+# RateMyRA Project Rules
+
+## Code Style
+- Use modern ES6+ syntax
+- Prefer async/await over promises
+- Use meaningful variable names
+- Add JSDoc comments for complex functions
+- Keep functions focused and single-purpose
+
+## React Guidelines
+- Use functional components with hooks
+- Extract reusable components
+- Use proper loading and error states
+- Implement proper loading spinners
+- Use CSS variables for theming
+
+## API Guidelines
+- Always validate input
+- Use proper HTTP status codes
+- Return consistent error formats
+- Implement caching where appropriate
+- Add rate limiting for write operations
+
+## Database
+- Use Prisma for all database operations
+- Add proper indexes for frequently queried fields
+- Use transactions for multi-step operations
+- Never expose sensitive data (IPs, fingerprints)
+
+## Security
+- Hash sensitive data (IPs, fingerprints)
+- Validate and sanitize all inputs
+- Use rate limiting
+- Implement proper error handling
+- Never expose stack traces in production
+
+## Performance
+- Implement Redis caching for frequently accessed data
+- Use pagination for large datasets
+- Optimize database queries
+- Cache search results
+- Invalidate cache on updates

@@ -1,0 +1,33 @@
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stars {
+  color: #fbbf24;
+  letter-spacing: 2px;
+  font-family: Arial, sans-serif;
+}
+
+.star-rating-small .stars {
+  font-size: 16px;
+}
+
+.star-rating-medium .stars {
+  font-size: 20px;
+}
+
+.star-rating-large .stars {
+  font-size: 28px;
+}
+
+.rating-number {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.star-rating-large .rating-number {
+  font-size: 20px;
+}

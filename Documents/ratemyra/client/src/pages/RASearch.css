@@ -1,0 +1,142 @@
+.ra-search {
+  padding: 40px 0;
+}
+
+.ra-search h1 {
+  margin-bottom: 32px;
+  color: var(--primary);
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.search-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 40px;
+  max-width: 700px;
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  background: white;
+  border-radius: 16px;
+}
+
+.results h2 {
+  margin: 40px 0 24px;
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.ra-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.ra-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.ra-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.ra-card-header h3 {
+  font-size: 22px;
+  color: var(--primary);
+  font-weight: 600;
+  flex: 1;
+}
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ra-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.detail-label {
+  color: var(--text-light);
+  font-weight: 500;
+  min-width: 70px;
+}
+
+.detail-value {
+  color: var(--text);
+  font-weight: 400;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+}
+
+.loading-container p {
+  color: var(--text-light);
+  font-size: 16px;
+}
+
+.error-message {
+  background: #fee;
+  color: var(--danger);
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.no-results {
+  font-size: 18px;
+  color: var(--text-light);
+}
+
+.add-ra-cta {
+  text-align: center;
+  padding: 24px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow);
+}
+
+.add-ra-cta p {
+  margin-bottom: 16px;
+  color: var(--text-light);
+  font-size: 16px;
+}

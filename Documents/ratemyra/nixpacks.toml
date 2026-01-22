@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "postgresql"]
+
+[phases.install]
+cmds = [
+  "npm install",
+  "cd server && npm install",
+  "cd ../client && npm install",
+  "cd ../server && npm run db:generate"
+]
+
+[phases.build]
+cmds = ["cd client && npm run build"]
+
+[start]
+cmd = "cd server && npm start"

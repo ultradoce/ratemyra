@@ -1,0 +1,257 @@
+.ra-detail {
+  padding: 40px 0;
+}
+
+.ra-header h1 {
+  color: var(--primary);
+  margin-bottom: 24px;
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.ra-info {
+  margin-bottom: 24px;
+  color: var(--text-light);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.ra-info p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.ra-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 32px;
+  margin: 40px 0;
+  padding: 32px 0;
+  border-top: 2px solid var(--border);
+  border-bottom: 2px solid var(--border);
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--text-light);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rating-distribution {
+  margin: 32px 0;
+  padding: 24px;
+  background: var(--bg);
+  border-radius: 12px;
+}
+
+.rating-distribution h3 {
+  margin-bottom: 20px;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.distribution-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.distribution-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dist-rating {
+  width: 40px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.dist-bar-container {
+  flex: 1;
+  height: 24px;
+  background: var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dist-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+  transition: width 0.3s ease;
+}
+
+.dist-count {
+  width: 40px;
+  text-align: right;
+  font-size: 14px;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.tags {
+  margin: 24px 0;
+}
+
+.tags h3 {
+  margin-bottom: 12px;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: var(--primary-dark);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+}
+
+.ra-actions {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid var(--border);
+}
+
+.reviews-section {
+  margin-top: 48px;
+}
+
+.reviews-section h2 {
+  margin-bottom: 24px;
+  color: var(--text);
+  font-size: 28px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.empty-state p {
+  font-size: 18px;
+  color: var(--text-light);
+  margin-bottom: 24px;
+}
+
+.review-card {
+  margin-bottom: 24px;
+  transition: all 0.2s ease;
+}
+
+.review-card:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.review-ratings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.rating-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rating-label {
+  font-size: 14px;
+  color: var(--text-light);
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.rating-value {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.difficulty-value {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+  padding: 4px 12px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+
+.review-date {
+  font-size: 14px;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.review-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tag-small {
+  background-color: var(--bg);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+  border: 1px solid var(--border);
+}
+
+.review-text {
+  line-height: 1.8;
+  color: var(--text);
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+.loading-reviews {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.load-more-container {
+  text-align: center;
+  margin-top: 32px;
+}

@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  domain    String?  // .edu domain
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  ras       RA[]
+  users     User[]
+  
+  @@index([name])
+}
+
+model RA {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  schoolId    String
+  dorm        String?  // Dormitory/hall name
+  floor       String?  // Floor number
+  legacyId    String?  // For merging profiles
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  reviews     Review[]
+  tagStats    RATagStat[]
+  
+  @@index([schoolId, firstName, lastName])
+  @@index([legacyId])
+}
+
+model Review {
+  id                    String   @id @default(cuid())
+  raId                  String
+  courseCode            String?  // Optional: if RA taught a class
+  ratingClarity         Int      @db.SmallInt // 1-5
+  ratingHelpfulness     Int      @db.SmallInt // 1-5
+  ratingOverall         Float    // Derived/calculated
+  difficulty            Int      @db.SmallInt // 1-5
+  tags                  String[] // Array of tag codes
+  attendanceRequired    Boolean  @default(false)
+  textBody              String?  @db.Text
+  timestamp             DateTime @default(now())
+  ipHash                String   // Hashed IP for abuse prevention
+  deviceFingerprintHash String?  // Hashed device fingerprint
+  status                ReviewStatus @default(ACTIVE)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  ra                    RA       @relation(fields: [raId], references: [id], onDelete: Cascade)
+  
+  @@index([raId, status])
+  @@index([ipHash])
+  @@index([timestamp])
+  @@index([status])
+}
+
+enum ReviewStatus {
+  ACTIVE
+  FLAGGED
+  HIDDEN
+  REMOVED
+}
+
+model RATagStat {
+  id        String   @id @default(cuid())
+  raId      String
+  tag       String   // Tag code like "TOUGH_GRADER", "CLEAR_LECTURES"
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+  
+  ra        RA       @relation(fields: [raId], references: [id], onDelete: Cascade)
+  
+  @@unique([raId, tag])
+  @@index([raId])
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hashed
+  role      UserRole @default(USER)
+  schoolId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  school    School?  @relation(fields: [schoolId], references: [id])
+  
+  @@index([email])
+  @@index([role])
+}
