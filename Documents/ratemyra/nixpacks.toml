@@ -11,7 +11,7 @@ cmds = [
 [phases.build]
 cmds = [
   "(cd server && npx prisma generate)",
-  "(cd client && npm run build)"
+  "(cd client && npm run build && echo '✅ Frontend build completed' && ls -la dist/ || (echo '❌ Frontend build failed!' && exit 1))"
 ]
 
 [phases.release]
