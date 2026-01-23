@@ -18,70 +18,99 @@ router.get('/', async (req, res, next) => {
       return res.status(500).json({ error: 'Database connection error' });
     }
     
-    // Build where clause
     const searchTerm = q ? q.trim() : '';
     
-    // Build base query options
-    const baseQuery = {
-      orderBy: { name: 'asc' },
-      take: searchTerm ? 20 : 1000,
-    };
-    
-    // Try with _count first, fallback without if it fails
+    // Simplified query - try basic query first
     let schools;
+    
     try {
-      schools = await prisma.school.findMany({
-        where: searchTerm ? {
-          name: { contains: searchTerm, mode: 'insensitive' }
-        } : {},
-        ...baseQuery,
-        include: {
-          _count: {
-            select: { ras: true },
-          },
-        },
-      });
-    } catch (error) {
-      console.error('Query with _count failed:', error.message);
-      console.error('Error code:', error.code);
-      
-      // Try without _count include
-      try {
-        console.log('Retrying without _count include...');
+      // First, try the simplest possible query
+      if (searchTerm) {
+        // Try case-insensitive search
         schools = await prisma.school.findMany({
-          where: searchTerm ? {
-            name: { contains: searchTerm, mode: 'insensitive' }
-          } : {},
-          ...baseQuery,
+          where: {
+            name: { 
+              contains: searchTerm,
+              mode: 'insensitive'
+            }
+          },
+          orderBy: { name: 'asc' },
+          take: 20,
         });
-        
-        // Manually add _count as 0 for now
+      } else {
+        // No search term, get all schools
+        schools = await prisma.school.findMany({
+          orderBy: { name: 'asc' },
+          take: 1000,
+        });
+      }
+      
+      // Now try to add _count if the basic query worked
+      try {
+        const schoolsWithCount = await Promise.all(
+          schools.map(async (school) => {
+            const count = await prisma.rA.count({
+              where: { schoolId: school.id }
+            });
+            return {
+              ...school,
+              _count: { ras: count }
+            };
+          })
+        );
+        schools = schoolsWithCount;
+      } catch (countError) {
+        console.warn('Could not get RA counts, continuing without:', countError.message);
+        // Continue without _count
         schools = schools.map(school => ({
           ...school,
           _count: { ras: 0 }
         }));
-      } catch (fallbackError) {
-        console.error('Fallback query also failed:', fallbackError.message);
-        // Try case-sensitive without _count
-        if (searchTerm) {
-          try {
-            schools = await prisma.school.findMany({
-              where: {
-                name: { contains: searchTerm }
-              },
-              ...baseQuery,
-            });
-            schools = schools.map(school => ({
-              ...school,
-              _count: { ras: 0 }
-            }));
-          } catch (finalError) {
-            console.error('All query attempts failed');
-            throw error; // Throw original error
-          }
-        } else {
-          throw error;
+      }
+      
+    } catch (queryError) {
+      console.error('School query error:', queryError);
+      console.error('Error code:', queryError.code);
+      console.error('Error message:', queryError.message);
+      console.error('Error meta:', queryError.meta);
+      
+      // If case-insensitive failed, try case-sensitive
+      if (searchTerm && queryError.message && queryError.message.includes('insensitive')) {
+        try {
+          console.log('Retrying with case-sensitive search...');
+          schools = await prisma.school.findMany({
+            where: {
+              name: { contains: searchTerm }
+            },
+            orderBy: { name: 'asc' },
+            take: 20,
+          });
+          
+          // Add counts manually
+          schools = await Promise.all(
+            schools.map(async (school) => {
+              try {
+                const count = await prisma.rA.count({
+                  where: { schoolId: school.id }
+                });
+                return {
+                  ...school,
+                  _count: { ras: count }
+                };
+              } catch {
+                return {
+                  ...school,
+                  _count: { ras: 0 }
+                };
+              }
+            })
+          );
+        } catch (fallbackError) {
+          console.error('Case-sensitive fallback also failed:', fallbackError);
+          throw queryError; // Throw original error
         }
+      } else {
+        throw queryError;
       }
     }
 
