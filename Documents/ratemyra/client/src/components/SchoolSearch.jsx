@@ -53,12 +53,23 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
 
     try {
       const response = await api.get(`/api/schools?q=${encodeURIComponent(term.trim())}`);
-      setSchools(response.data);
+      const schoolsData = Array.isArray(response.data) ? response.data : [];
+      setSchools(schoolsData);
       setShowDropdown(true);
     } catch (err) {
-      setError('Failed to search schools');
       console.error('School search error:', err);
       console.error('Error details:', err.response?.data || err.message);
+      
+      // More specific error messages
+      if (err.response?.status === 404) {
+        setError('Schools endpoint not found. Please check if the server is running.');
+      } else if (err.response?.status >= 500) {
+        setError('Server error. Please try again later.');
+      } else if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error')) {
+        setError('Network error. Please check your connection.');
+      } else {
+        setError('Failed to search schools. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

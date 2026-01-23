@@ -27,8 +27,10 @@ router.get('/', async (req, res, next) => {
       take: q ? 20 : 1000, // Limit results when searching
     });
 
-    res.json(schools);
+    // Always return an array, even if empty
+    res.json(schools || []);
   } catch (error) {
+    console.error('Error fetching schools:', error);
     next(error);
   }
 });
