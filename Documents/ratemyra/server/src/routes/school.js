@@ -18,9 +18,13 @@ router.get('/', async (req, res, next) => {
       return res.status(500).json({ error: 'Database connection error' });
     }
     
-    // Build where clause
-    const where = q && q.trim() ? {
-      name: { contains: q.trim(), mode: 'insensitive' }
+    // Build where clause - use case-insensitive if supported
+    const searchTerm = q ? q.trim() : '';
+    const where = searchTerm ? {
+      name: { 
+        contains: searchTerm, 
+        mode: 'insensitive' 
+      }
     } : {};
     
     let schools;
@@ -33,28 +37,40 @@ router.get('/', async (req, res, next) => {
             select: { ras: true },
           },
         },
-        take: q ? 20 : 1000, // Limit results when searching
+        take: searchTerm ? 20 : 1000, // Limit results when searching
       });
     } catch (queryError) {
-      // If case-insensitive fails, try case-sensitive
-      if (queryError.message && queryError.message.includes('insensitive')) {
-        console.log('Case-insensitive search failed, retrying with case-sensitive...');
-        const fallbackWhere = q && q.trim() ? {
-          name: { contains: q.trim() }
-        } : {};
-        
-        schools = await prisma.school.findMany({
-          where: fallbackWhere,
-          orderBy: { name: 'asc' },
-          include: {
-            _count: {
-              select: { ras: true },
-            },
-          },
-          take: q ? 20 : 1000,
-        });
+      // If case-insensitive mode fails, try without it
+      console.error('Query error:', queryError);
+      console.error('Error code:', queryError.code);
+      console.error('Error message:', queryError.message);
+      
+      if (queryError.code && queryError.code.startsWith('P')) {
+        // It's a Prisma error, try case-sensitive fallback
+        if (searchTerm) {
+          console.log('Retrying with case-sensitive search...');
+          try {
+            schools = await prisma.school.findMany({
+              where: {
+                name: { contains: searchTerm }
+              },
+              orderBy: { name: 'asc' },
+              include: {
+                _count: {
+                  select: { ras: true },
+                },
+              },
+              take: 20,
+            });
+          } catch (fallbackError) {
+            console.error('Fallback query also failed:', fallbackError);
+            throw queryError; // Throw original error
+          }
+        } else {
+          throw queryError;
+        }
       } else {
-        throw queryError; // Re-throw if it's a different error
+        throw queryError;
       }
     }
 
