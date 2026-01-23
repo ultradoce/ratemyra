@@ -2,6 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './SchoolSearch.css';
 
+// Use configured API instance if available, otherwise use axios directly
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter your school to get started" }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [schools, setSchools] = useState([]);
@@ -44,12 +52,13 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
     setError(null);
 
     try {
-      const response = await axios.get(`/api/schools?q=${encodeURIComponent(term.trim())}`);
+      const response = await api.get(`/api/schools?q=${encodeURIComponent(term.trim())}`);
       setSchools(response.data);
       setShowDropdown(true);
     } catch (err) {
       setError('Failed to search schools');
-      console.error(err);
+      console.error('School search error:', err);
+      console.error('Error details:', err.response?.data || err.message);
     } finally {
       setLoading(false);
     }
