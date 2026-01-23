@@ -8,6 +8,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
+    "db:seed:schools": "node scripts/seed-schools.js",
     "db:studio": "prisma studio",
     "create-admin": "node scripts/create-admin.js"
   },
