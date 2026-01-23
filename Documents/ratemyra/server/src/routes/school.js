@@ -18,33 +18,45 @@ router.get('/', async (req, res, next) => {
       return res.status(500).json({ error: 'Database connection error' });
     }
     
-    // Build where clause - try case-insensitive first, fallback to case-sensitive if needed
-    let where = {};
-    if (q && q.trim()) {
-      const searchTerm = q.trim();
-      try {
-        // Try case-insensitive search first
-        where = {
-          name: { contains: searchTerm, mode: 'insensitive' }
-        };
-      } catch (e) {
-        // Fallback to case-sensitive if mode: 'insensitive' not supported
-        where = {
-          name: { contains: searchTerm }
-        };
+    // Build where clause
+    const where = q && q.trim() ? {
+      name: { contains: q.trim(), mode: 'insensitive' }
+    } : {};
+    
+    let schools;
+    try {
+      schools = await prisma.school.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        include: {
+          _count: {
+            select: { ras: true },
+          },
+        },
+        take: q ? 20 : 1000, // Limit results when searching
+      });
+    } catch (queryError) {
+      // If case-insensitive fails, try case-sensitive
+      if (queryError.message && queryError.message.includes('insensitive')) {
+        console.log('Case-insensitive search failed, retrying with case-sensitive...');
+        const fallbackWhere = q && q.trim() ? {
+          name: { contains: q.trim() }
+        } : {};
+        
+        schools = await prisma.school.findMany({
+          where: fallbackWhere,
+          orderBy: { name: 'asc' },
+          include: {
+            _count: {
+              select: { ras: true },
+            },
+          },
+          take: q ? 20 : 1000,
+        });
+      } else {
+        throw queryError; // Re-throw if it's a different error
       }
     }
-    
-    const schools = await prisma.school.findMany({
-      where,
-      orderBy: { name: 'asc' },
-      include: {
-        _count: {
-          select: { ras: true },
-        },
-      },
-      take: q ? 20 : 1000, // Limit results when searching
-    });
 
     // Always return an array, even if empty
     res.json(schools || []);
