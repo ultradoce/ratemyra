@@ -372,4 +372,29 @@ router.get('/schools', async (req, res, next) => {
   }
 });
 
+/**
+ * POST /api/admin/seed-schools
+ * Seed the database with schools (admin only)
+ */
+router.post('/seed-schools', async (req, res, next) => {
+  try {
+    // Import and run seed function
+    const { seedSchools } = await import('../../scripts/seed-schools.js');
+    
+    // Run the seed function with the existing prisma instance
+    const result = await seedSchools(prisma);
+    
+    res.json({
+      success: true,
+      message: 'Schools seeded successfully',
+      created: result.created,
+      skipped: result.skipped,
+      total: result.total
+    });
+  } catch (error) {
+    console.error('Error seeding schools:', error);
+    next(error);
+  }
+});
+
 export default router;

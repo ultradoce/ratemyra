@@ -142,7 +142,8 @@ const schools = [
   { name: 'University of Toledo', location: 'Toledo, OH', domain: 'utoledo.edu' },
 ];
 
-async function seedSchools() {
+export async function seedSchools(prismaInstance = null) {
+  const db = prismaInstance || prisma;
   console.log('🌱 Starting to seed schools...\n');
 
   let created = 0;
@@ -150,7 +151,7 @@ async function seedSchools() {
 
   for (const school of schools) {
     try {
-      const existing = await prisma.school.findUnique({
+      const existing = await db.school.findUnique({
         where: { name: school.name },
       });
 
@@ -160,7 +161,7 @@ async function seedSchools() {
         continue;
       }
 
-      await prisma.school.create({
+      await db.school.create({
         data: school,
       });
 
@@ -180,13 +181,21 @@ async function seedSchools() {
   console.log(`   Created: ${created} schools`);
   console.log(`   Skipped: ${skipped} schools`);
   console.log(`   Total: ${schools.length} schools`);
+  
+  return { created, skipped, total: schools.length };
 }
 
-seedSchools()
-  .catch((error) => {
-    console.error('Error seeding schools:', error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// Export schools data
+export { schools as SCHOOLS_DATA };
+
+// Run if called directly
+if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.includes('seed-schools')) {
+  seedSchools()
+    .catch((error) => {
+      console.error('Error seeding schools:', error);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

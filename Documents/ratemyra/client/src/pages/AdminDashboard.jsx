@@ -103,6 +103,22 @@ function AdminDashboard() {
           </div>
         </div>
 
+        {dashboardData?.stats.totalSchools === 0 && (
+          <div className="alert-card card" style={{ 
+            background: 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)',
+            border: '2px solid #ffc107',
+            padding: '24px',
+            marginBottom: '32px',
+            borderRadius: '12px'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#856404' }}>⚠️ No Schools in Database</h3>
+            <p style={{ color: '#856404', marginBottom: '16px' }}>
+              The database is empty. Click the button below to add 100+ major US colleges and universities.
+            </p>
+            <SeedSchoolsButton onSuccess={fetchDashboard} />
+          </div>
+        )}
+
         <div className="admin-tabs">
           <button
             className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
@@ -194,6 +210,75 @@ function AdminDashboard() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function SeedSchoolsButton({ onSuccess }) {
+  const [seeding, setSeeding] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await axios.post('/api/admin/seed-schools');
+      setResult(response.data);
+      if (onSuccess) {
+        setTimeout(() => {
+          onSuccess();
+        }, 1000);
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to seed schools');
+      console.error(err);
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  return (
+    <div>
+      <button
+        onClick={handleSeed}
+        disabled={seeding}
+        className="btn btn-primary"
+        style={{ marginRight: '12px' }}
+      >
+        {seeding ? (
+          <>
+            <span className="loading-spinner" style={{ display: 'inline-block', marginRight: '8px' }}>⏳</span>
+            Seeding Schools...
+          </>
+        ) : (
+          '🌱 Seed Schools Database'
+        )}
+      </button>
+      {result && (
+        <div style={{ 
+          marginTop: '12px', 
+          padding: '12px', 
+          background: '#d4edda', 
+          borderRadius: '8px',
+          color: '#155724'
+        }}>
+          ✅ Success! Created {result.created} schools, skipped {result.skipped} duplicates.
+        </div>
+      )}
+      {error && (
+        <div style={{ 
+          marginTop: '12px', 
+          padding: '12px', 
+          background: '#f8d7da', 
+          borderRadius: '8px',
+          color: '#721c24'
+        }}>
+          ❌ Error: {error}
+        </div>
+      )}
     </div>
   );
 }
