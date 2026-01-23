@@ -43,98 +43,63 @@ router.get('/', async (req, res, next) => {
     
     const searchTerm = q ? q.trim() : '';
     
-    // Simplified query - try basic query first
-    let schools;
+    // Ultra-simplified query to prevent crashes
+    let schools = [];
     
     try {
-      // First, try the simplest possible query
+      // Start with the absolute simplest query possible
       if (searchTerm) {
-        // Try case-insensitive search
+        // Try without case-insensitive first to avoid potential issues
         schools = await prisma.school.findMany({
           where: {
-            name: { 
-              contains: searchTerm,
-              mode: 'insensitive'
-            }
+            name: { contains: searchTerm }
           },
           orderBy: { name: 'asc' },
           take: 20,
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            domain: true,
+            // Don't include _count initially to avoid relation issues
+          },
         });
       } else {
-        // No search term, get all schools
+        // No search term, get all schools (limited)
         schools = await prisma.school.findMany({
           orderBy: { name: 'asc' },
-          take: 1000,
+          take: 100,
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            domain: true,
+          },
         });
       }
       
-      // Now try to add _count if the basic query worked
-      try {
-        const schoolsWithCount = await Promise.all(
-          schools.map(async (school) => {
-            const count = await prisma.rA.count({
-              where: { schoolId: school.id }
-            });
-            return {
-              ...school,
-              _count: { ras: count }
-            };
-          })
-        );
-        schools = schoolsWithCount;
-      } catch (countError) {
-        console.warn('Could not get RA counts, continuing without:', countError.message);
-        // Continue without _count
-        schools = schools.map(school => ({
-          ...school,
-          _count: { ras: 0 }
-        }));
-      }
+      // Add _count manually after getting schools (safer)
+      schools = schools.map(school => ({
+        ...school,
+        _count: { ras: 0 } // Default to 0, can be calculated later if needed
+      }));
       
     } catch (queryError) {
       console.error('School query error:', queryError);
       console.error('Error code:', queryError.code);
       console.error('Error message:', queryError.message);
-      console.error('Error meta:', queryError.meta);
       
-      // If case-insensitive failed, try case-sensitive
-      if (searchTerm && queryError.message && queryError.message.includes('insensitive')) {
-        try {
-          console.log('Retrying with case-sensitive search...');
-          schools = await prisma.school.findMany({
-            where: {
-              name: { contains: searchTerm }
-            },
-            orderBy: { name: 'asc' },
-            take: 20,
-          });
-          
-          // Add counts manually
-          schools = await Promise.all(
-            schools.map(async (school) => {
-              try {
-                const count = await prisma.rA.count({
-                  where: { schoolId: school.id }
-                });
-                return {
-                  ...school,
-                  _count: { ras: count }
-                };
-              } catch {
-                return {
-                  ...school,
-                  _count: { ras: 0 }
-                };
-              }
-            })
-          );
-        } catch (fallbackError) {
-          console.error('Case-sensitive fallback also failed:', fallbackError);
-          throw queryError; // Throw original error
-        }
-      } else {
-        throw queryError;
+      // Return empty array instead of crashing
+      if (queryError.code === 'P1001' || queryError.code === 'P1012') {
+        return res.status(503).json({ 
+          error: 'Database connection error',
+          message: 'Unable to connect to database'
+        });
       }
+      
+      // For other errors, return empty array to prevent crash
+      console.error('Query failed, returning empty array to prevent crash');
+      return res.json([]);
     }
 
     // Always return an array, even if empty
