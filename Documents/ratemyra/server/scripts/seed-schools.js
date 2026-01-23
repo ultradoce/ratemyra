@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
+// Create prisma instance for standalone script execution
 const prisma = new PrismaClient();
 
 // Major US colleges and universities
