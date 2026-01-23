@@ -2,7 +2,7 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import { PrismaClient } from '@prisma/client';
-import { calculateWeightedRating, getRatingDistribution, calculateAverageDifficulty } from '../utils/rating.js';
+import { calculateWeightedRating, getRatingDistribution, calculateAverageDifficulty, calculateWouldTakeAgainPercentage } from '../utils/rating.js';
 import { getCache, setCache, deleteCache, cacheKeys } from '../utils/cache.js';
 import { findPotentialDuplicates } from '../utils/duplicateDetection.js';
 import { hashIP, getClientIP } from '../utils/abusePrevention.js';
@@ -58,6 +58,7 @@ router.get('/:id', async (req, res, next) => {
     const weightedRating = calculateWeightedRating(activeReviews);
     const ratingDistribution = getRatingDistribution(activeReviews);
     const averageDifficulty = calculateAverageDifficulty(activeReviews);
+    const wouldTakeAgainPercentage = calculateWouldTakeAgainPercentage(activeReviews);
     
     // Format tag stats with display names
     const tagStats = ra.tagStats.map(stat => ({
@@ -76,6 +77,7 @@ router.get('/:id', async (req, res, next) => {
       totalReviews: activeReviews.length,
       ratingDistribution,
       averageDifficulty,
+      wouldTakeAgainPercentage,
       tagStats,
       recentReviews: activeReviews.slice(0, 10), // Most recent 10
     };

@@ -115,3 +115,49 @@ textarea.input {
   color: #28a745;
   margin-bottom: 10px;
 }
+
+.would-take-again-input {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.wta-btn {
+  flex: 1;
+  padding: 14px 24px;
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: var(--text);
+}
+
+.wta-btn:hover {
+  border-color: var(--primary);
+  background-color: #e0e7ff;
+  transform: translateY(-2px);
+}
+
+.wta-btn.active.yes {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border-color: #28a745;
+  box-shadow: var(--shadow-md);
+}
+
+.wta-btn.active.no {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  border-color: #dc3545;
+  box-shadow: var(--shadow-md);
+}
+
+.form-help-text {
+  font-size: 13px;
+  color: #666;
+  margin-top: 8px;
+  font-style: italic;
+}

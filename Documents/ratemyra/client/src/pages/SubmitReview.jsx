@@ -29,6 +29,7 @@ function SubmitReview() {
     ratingClarity: 5,
     ratingHelpfulness: 5,
     difficulty: 3,
+    wouldTakeAgain: null, // null = not answered, true/false = yes/no
     tags: [],
     attendanceRequired: false,
     textBody: '',
@@ -63,6 +64,13 @@ function SubmitReview() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (formData.wouldTakeAgain === null) {
+      setError('Please indicate if you would take this RA again.');
+      return;
+    }
+    
     setSubmitting(true);
     setError(null);
 
@@ -152,6 +160,27 @@ function SubmitReview() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>Would Take Again? *</label>
+            <div className="would-take-again-input">
+              <button
+                type="button"
+                className={`wta-btn ${formData.wouldTakeAgain === true ? 'active yes' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, wouldTakeAgain: true }))}
+              >
+                ✓ Yes
+              </button>
+              <button
+                type="button"
+                className={`wta-btn ${formData.wouldTakeAgain === false ? 'active no' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, wouldTakeAgain: false }))}
+              >
+                ✗ No
+              </button>
+            </div>
+            <p className="form-help-text">Would you want this RA again?</p>
           </div>
 
           <div className="form-group">

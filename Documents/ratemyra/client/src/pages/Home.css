@@ -30,10 +30,35 @@
   line-height: 1.6;
 }
 
-.search-form {
-  display: flex;
+.search-flow {
   max-width: 700px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.school-selection {
+  width: 100%;
+}
+
+.search-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ra-search-wrapper {
+  display: flex;
   gap: 12px;
   box-shadow: var(--shadow-lg);
   padding: 8px;

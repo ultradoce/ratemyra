@@ -9,11 +9,36 @@
   font-weight: 700;
 }
 
+.search-flow {
+  max-width: 700px;
+  margin: 0 auto 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.school-selection {
+  width: 100%;
+}
+
+.search-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  text-align: left;
+}
+
 .search-form {
   display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin-bottom: 40px;
-  max-width: 700px;
+}
+
+.ra-search-wrapper {
+  display: flex;
+  gap: 12px;
   box-shadow: var(--shadow-lg);
   padding: 8px;
   background: white;
@@ -47,47 +72,74 @@
 }
 
 .ra-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   margin-bottom: 16px;
-  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
 .ra-card-header h3 {
-  font-size: 22px;
+  font-size: 24px;
   color: var(--primary);
-  font-weight: 600;
-  flex: 1;
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
-.rating-container {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.ra-card-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.detail-item {
-  display: flex;
-  gap: 8px;
+.ra-card-school {
   font-size: 14px;
-}
-
-.detail-label {
   color: var(--text-light);
   font-weight: 500;
-  min-width: 70px;
 }
 
-.detail-value {
-  color: var(--text);
-  font-weight: 400;
+.ra-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px 0;
+}
+
+.metric {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.metric-primary {
+  background: linear-gradient(135deg, rgba(74, 144, 226, 0.1) 0%, rgba(74, 144, 226, 0.05) 100%);
+  border: 1px solid rgba(74, 144, 226, 0.2);
+}
+
+.metric-highlight {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+.metric-highlight .metric-value {
+  color: #28a745;
+}
+
+.metric-label {
+  font-size: 11px;
+  color: var(--text-light);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ra-card-location {
+  font-size: 13px;
+  color: var(--text-light);
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 .loading-container {

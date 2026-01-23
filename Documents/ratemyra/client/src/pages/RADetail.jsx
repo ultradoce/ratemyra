@@ -90,21 +90,29 @@ function RADetail() {
           </div>
           
           <div className="ra-stats">
-            <div className="stat">
-              <div className="stat-value">{ra.rating ? ra.rating.toFixed(1) : 'N/A'}</div>
-              <div className="stat-label">Overall Rating</div>
-              {ra.rating && <StarRating rating={ra.rating} size="medium" />}
+            <div className="stat stat-primary">
+              <div className="stat-value-large">{ra.rating ? ra.rating.toFixed(1) : 'N/A'}</div>
+              <div className="stat-label">Overall Quality</div>
+              {ra.rating && <StarRating rating={ra.rating} size="large" />}
             </div>
-            <div className="stat">
-              <div className="stat-value">{ra.totalReviews}</div>
-              <div className="stat-label">Total Reviews</div>
-            </div>
-            {ra.averageDifficulty && (
-              <div className="stat">
-                <div className="stat-value">{ra.averageDifficulty.toFixed(1)}/5.0</div>
-                <div className="stat-label">Average Difficulty</div>
+            {ra.wouldTakeAgainPercentage !== null && ra.wouldTakeAgainPercentage !== undefined && (
+              <div className="stat stat-highlight">
+                <div className="stat-value-large">{ra.wouldTakeAgainPercentage}%</div>
+                <div className="stat-label">Would Take Again</div>
+                <div className="stat-subtext">Based on {ra.totalReviews} {ra.totalReviews === 1 ? 'review' : 'reviews'}</div>
               </div>
             )}
+            {ra.averageDifficulty && (
+              <div className="stat">
+                <div className="stat-value">{ra.averageDifficulty.toFixed(1)}</div>
+                <div className="stat-label">Level of Difficulty</div>
+                <div className="stat-subtext">1.0 is easiest, 5.0 is hardest</div>
+              </div>
+            )}
+            <div className="stat">
+              <div className="stat-value">{ra.totalReviews}</div>
+              <div className="stat-label">Total Ratings</div>
+            </div>
           </div>
 
           {ra.ratingDistribution && (

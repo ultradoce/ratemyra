@@ -82,3 +82,27 @@ export function calculateAverageDifficulty(reviews) {
   const sum = reviews.reduce((acc, review) => acc + review.difficulty, 0);
   return Math.round((sum / reviews.length) * 10) / 10;
 }
+
+/**
+ * Calculate "Would Take Again" percentage (RMP-style)
+ * Only counts reviews where wouldTakeAgain is not null
+ * @param {Array} reviews - Array of reviews with wouldTakeAgain field
+ * @returns {number|null} - Percentage (0-100) or null if no data
+ */
+export function calculateWouldTakeAgainPercentage(reviews) {
+  if (!reviews || reviews.length === 0) {
+    return null;
+  }
+  
+  // Only count reviews where wouldTakeAgain is explicitly set (not null)
+  const reviewsWithAnswer = reviews.filter(r => r.wouldTakeAgain !== null && r.wouldTakeAgain !== undefined);
+  
+  if (reviewsWithAnswer.length === 0) {
+    return null;
+  }
+  
+  const yesCount = reviewsWithAnswer.filter(r => r.wouldTakeAgain === true).length;
+  const percentage = (yesCount / reviewsWithAnswer.length) * 100;
+  
+  return Math.round(percentage);
+}

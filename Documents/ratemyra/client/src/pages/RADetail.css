@@ -44,12 +44,48 @@
   line-height: 1;
 }
 
+.stat-value-large {
+  font-size: 56px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.stat-primary .stat-value-large {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-highlight .stat-value-large {
+  color: #28a745;
+  font-weight: 800;
+}
+
 .stat-label {
   font-size: 14px;
   color: var(--text-light);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.stat-subtext {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.stat-primary,
+.stat-highlight {
+  padding: 20px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
 }
 
 .rating-distribution {

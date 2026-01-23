@@ -51,6 +51,7 @@ model Review {
   ratingHelpfulness     Int      @db.SmallInt // 1-5
   ratingOverall         Float    // Derived/calculated
   difficulty            Int      @db.SmallInt // 1-5
+  wouldTakeAgain        Boolean? // Would take this RA again (RMP-style)
   tags                  String[] // Array of tag codes
   attendanceRequired    Boolean  @default(false)
   textBody              String?  @db.Text

@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import SchoolSearch from '../components/SchoolSearch';
 import './Home.css';
 
 function Home() {
+  const [selectedSchool, setSelectedSchool] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
+  const handleSchoolSelect = (school) => {
+    setSelectedSchool(school);
+    setSearchQuery(''); // Clear RA search when school changes
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
+    if (!selectedSchool) {
+      return; // Can't search without a school
+    }
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search?schoolId=${selectedSchool.id}&q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -22,18 +32,34 @@ function Home() {
             Share your experience and help other students find the best RAs
           </p>
           
-          <form onSubmit={handleSearch} className="search-form">
-            <input
-              type="text"
-              placeholder="Search for an RA by name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-            <button type="submit" className="btn btn-primary">
-              Search
-            </button>
-          </form>
+          <div className="search-flow">
+            <div className="school-selection">
+              <label className="search-label">Step 1: Find Your School</label>
+              <SchoolSearch
+                onSelectSchool={handleSchoolSelect}
+                selectedSchool={selectedSchool}
+                placeholder="Enter your school to get started"
+              />
+            </div>
+
+            {selectedSchool && (
+              <form onSubmit={handleSearch} className="search-form">
+                <label className="search-label">Step 2: Search for an RA</label>
+                <div className="ra-search-wrapper">
+                  <input
+                    type="text"
+                    placeholder={`Search for an RA at ${selectedSchool.name}...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
+                  <button type="submit" className="btn btn-primary" disabled={!searchQuery.trim()}>
+                    Search
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
 
         <div className="features">

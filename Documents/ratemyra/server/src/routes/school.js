@@ -6,17 +6,25 @@ const prisma = new PrismaClient();
 
 /**
  * GET /api/schools
- * List all schools
+ * List all schools (with optional search)
  */
 router.get('/', async (req, res, next) => {
   try {
+    const { q } = req.query;
+    
+    const where = q ? {
+      name: { contains: q, mode: 'insensitive' }
+    } : {};
+    
     const schools = await prisma.school.findMany({
+      where,
       orderBy: { name: 'asc' },
       include: {
         _count: {
           select: { ras: true },
         },
       },
+      take: q ? 20 : 1000, // Limit results when searching
     });
 
     res.json(schools);

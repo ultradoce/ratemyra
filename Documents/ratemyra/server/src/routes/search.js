@@ -1,6 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { calculateWeightedRating } from '../utils/rating.js';
+import { calculateWeightedRating, calculateAverageDifficulty, calculateWouldTakeAgainPercentage } from '../utils/rating.js';
 import { getCache, setCache, cacheKeys } from '../utils/cache.js';
 
 const router = express.Router();
@@ -13,6 +13,10 @@ const prisma = new PrismaClient();
 router.get('/', async (req, res, next) => {
   try {
     const { q, schoolId, limit = 20 } = req.query;
+
+    if (!schoolId) {
+      return res.status(400).json({ error: 'School ID is required' });
+    }
 
     if (!q || q.trim().length === 0) {
       return res.status(400).json({ error: 'Search query is required' });
@@ -27,18 +31,15 @@ router.get('/', async (req, res, next) => {
       return res.json(cached);
     }
 
-    // Build search query
+    // Build search query - schoolId is required
     const where = {
+      schoolId: schoolId,
       OR: [
         { firstName: { contains: searchTerm, mode: 'insensitive' } },
         { lastName: { contains: searchTerm, mode: 'insensitive' } },
         { dorm: { contains: searchTerm, mode: 'insensitive' } },
       ],
     };
-
-    if (schoolId) {
-      where.schoolId = schoolId;
-    }
 
     // Fetch RAs
     const ras = await prisma.rA.findMany({
@@ -58,6 +59,8 @@ router.get('/', async (req, res, next) => {
         const reviews = ra.reviews;
         const rating = calculateWeightedRating(reviews);
         const reviewCount = reviews.length;
+        const averageDifficulty = calculateAverageDifficulty(reviews);
+        const wouldTakeAgainPercentage = calculateWouldTakeAgainPercentage(reviews);
 
         // Ranking algorithm
         // score = rating_weight * normalized_rating + volume_weight * log(review_count) + recency_weight
@@ -85,6 +88,8 @@ router.get('/', async (req, res, next) => {
           floor: ra.floor,
           rating,
           totalReviews: reviewCount,
+          averageDifficulty,
+          wouldTakeAgainPercentage,
           score, // For sorting
         };
       })
