@@ -12,6 +12,12 @@ router.get('/', async (req, res, next) => {
   try {
     const { q } = req.query;
     
+    // Handle case where Prisma might not be initialized or database not connected
+    if (!prisma) {
+      console.error('Prisma client not initialized');
+      return res.status(500).json({ error: 'Database connection error' });
+    }
+    
     const where = q ? {
       name: { contains: q, mode: 'insensitive' }
     } : {};
@@ -31,6 +37,21 @@ router.get('/', async (req, res, next) => {
     res.json(schools || []);
   } catch (error) {
     console.error('Error fetching schools:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P1001') {
+      return res.status(503).json({ error: 'Database connection failed. Please check database configuration.' });
+    }
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Resource not found' });
+    }
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: 'Duplicate entry' });
+    }
+    
+    // Generic error response
     next(error);
   }
 });
