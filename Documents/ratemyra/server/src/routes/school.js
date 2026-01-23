@@ -5,6 +5,29 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 /**
+ * GET /api/schools/test
+ * Test endpoint to check if schools table exists and database is connected
+ */
+router.get('/test', async (req, res) => {
+  try {
+    // Simple test query
+    const count = await prisma.school.count();
+    res.json({ 
+      success: true, 
+      message: 'Schools table accessible',
+      count 
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code,
+      meta: error.meta
+    });
+  }
+});
+
+/**
  * GET /api/schools
  * List all schools (with optional search)
  */
@@ -164,8 +187,16 @@ router.get('/', async (req, res, next) => {
       }
     }
     
-    // Generic error response
-    next(error);
+    // Return detailed error for debugging
+    return res.status(500).json({
+      error: 'Failed to fetch schools',
+      message: error.message || 'Unknown error',
+      code: error.code,
+      ...(process.env.NODE_ENV === 'development' && {
+        stack: error.stack,
+        meta: error.meta
+      })
+    });
   }
 });
 
