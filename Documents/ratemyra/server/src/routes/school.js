@@ -33,7 +33,7 @@ router.get('/test', async (req, res) => {
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { q } = req.query;
+    const { q, limit } = req.query;
     
     // Handle case where Prisma might not be initialized or database not connected
     if (!prisma) {
@@ -42,33 +42,34 @@ router.get('/', async (req, res, next) => {
     }
     
     const searchTerm = q ? q.trim() : '';
+    const resultLimit = limit ? parseInt(limit, 10) : (searchTerm ? 20 : 50);
     
-    // Ultra-simplified query to prevent crashes
     let schools = [];
     
     try {
-      // Start with the absolute simplest query possible
       if (searchTerm) {
-        // Try without case-insensitive first to avoid potential issues
+        // Search by name or location
         schools = await prisma.school.findMany({
           where: {
-            name: { contains: searchTerm }
+            OR: [
+              { name: { contains: searchTerm } },
+              { location: { contains: searchTerm } }
+            ]
           },
           orderBy: { name: 'asc' },
-          take: 20,
+          take: resultLimit,
           select: {
             id: true,
             name: true,
             location: true,
             domain: true,
-            // Don't include _count initially to avoid relation issues
           },
         });
       } else {
-        // No search term, get all schools (limited)
+        // No search term, show popular schools (ordered by name for now)
         schools = await prisma.school.findMany({
           orderBy: { name: 'asc' },
-          take: 100,
+          take: resultLimit,
           select: {
             id: true,
             name: true,
@@ -78,11 +79,25 @@ router.get('/', async (req, res, next) => {
         });
       }
       
-      // Add _count manually after getting schools (safer)
-      schools = schools.map(school => ({
-        ...school,
-        _count: { ras: 0 } // Default to 0, can be calculated later if needed
-      }));
+      // Try to get RA counts, but don't fail if it doesn't work
+      try {
+        const schoolsWithCounts = await Promise.all(
+          schools.map(async (school) => {
+            try {
+              const count = await prisma.rA.count({
+                where: { schoolId: school.id }
+              });
+              return { ...school, _count: { ras: count } };
+            } catch {
+              return { ...school, _count: { ras: 0 } };
+            }
+          })
+        );
+        schools = schoolsWithCounts;
+      } catch {
+        // If counting fails, just set to 0
+        schools = schools.map(school => ({ ...school, _count: { ras: 0 } }));
+      }
       
     } catch (queryError) {
       console.error('School query error:', queryError);
