@@ -18,60 +18,48 @@ router.get('/', async (req, res, next) => {
       return res.status(500).json({ error: 'Database connection error' });
     }
     
-    // Build where clause - use case-insensitive if supported
+    // Build where clause
     const searchTerm = q ? q.trim() : '';
-    const where = searchTerm ? {
-      name: { 
-        contains: searchTerm, 
-        mode: 'insensitive' 
-      }
-    } : {};
     
+    // Try case-insensitive search, fallback to case-sensitive if needed
     let schools;
-    try {
-      schools = await prisma.school.findMany({
-        where,
-        orderBy: { name: 'asc' },
-        include: {
-          _count: {
-            select: { ras: true },
-          },
+    const queryOptions = {
+      orderBy: { name: 'asc' },
+      include: {
+        _count: {
+          select: { ras: true },
         },
-        take: searchTerm ? 20 : 1000, // Limit results when searching
-      });
-    } catch (queryError) {
-      // If case-insensitive mode fails, try without it
-      console.error('Query error:', queryError);
-      console.error('Error code:', queryError.code);
-      console.error('Error message:', queryError.message);
-      
-      if (queryError.code && queryError.code.startsWith('P')) {
-        // It's a Prisma error, try case-sensitive fallback
-        if (searchTerm) {
-          console.log('Retrying with case-sensitive search...');
-          try {
-            schools = await prisma.school.findMany({
-              where: {
-                name: { contains: searchTerm }
-              },
-              orderBy: { name: 'asc' },
-              include: {
-                _count: {
-                  select: { ras: true },
-                },
-              },
-              take: 20,
-            });
-          } catch (fallbackError) {
-            console.error('Fallback query also failed:', fallbackError);
-            throw queryError; // Throw original error
-          }
-        } else {
-          throw queryError;
+      },
+      take: searchTerm ? 20 : 1000,
+    };
+    
+    if (searchTerm) {
+      // Try case-insensitive first
+      try {
+        schools = await prisma.school.findMany({
+          where: {
+            name: { contains: searchTerm, mode: 'insensitive' }
+          },
+          ...queryOptions,
+        });
+      } catch (insensitiveError) {
+        console.error('Case-insensitive search failed:', insensitiveError.message);
+        // Fallback to case-sensitive
+        try {
+          schools = await prisma.school.findMany({
+            where: {
+              name: { contains: searchTerm }
+            },
+            ...queryOptions,
+          });
+        } catch (fallbackError) {
+          console.error('Case-sensitive fallback also failed:', fallbackError.message);
+          throw insensitiveError; // Throw original error
         }
-      } else {
-        throw queryError;
       }
+    } else {
+      // No search term, get all schools
+      schools = await prisma.school.findMany(queryOptions);
     }
 
     // Always return an array, even if empty
