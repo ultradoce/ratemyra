@@ -18,9 +18,22 @@ router.get('/', async (req, res, next) => {
       return res.status(500).json({ error: 'Database connection error' });
     }
     
-    const where = q ? {
-      name: { contains: q, mode: 'insensitive' }
-    } : {};
+    // Build where clause - try case-insensitive first, fallback to case-sensitive if needed
+    let where = {};
+    if (q && q.trim()) {
+      const searchTerm = q.trim();
+      try {
+        // Try case-insensitive search first
+        where = {
+          name: { contains: searchTerm, mode: 'insensitive' }
+        };
+      } catch (e) {
+        // Fallback to case-sensitive if mode: 'insensitive' not supported
+        where = {
+          name: { contains: searchTerm }
+        };
+      }
+    }
     
     const schools = await prisma.school.findMany({
       where,
@@ -39,16 +52,48 @@ router.get('/', async (req, res, next) => {
     console.error('Error fetching schools:', error);
     console.error('Error code:', error.code);
     console.error('Error message:', error.message);
+    console.error('Error meta:', error.meta);
     
     // Handle specific Prisma errors
     if (error.code === 'P1001') {
-      return res.status(503).json({ error: 'Database connection failed. Please check database configuration.' });
+      return res.status(503).json({ 
+        error: 'Database connection failed',
+        message: 'Unable to connect to database. Please check DATABASE_URL configuration.'
+      });
+    }
+    if (error.code === 'P1012') {
+      return res.status(500).json({ 
+        error: 'Database configuration error',
+        message: 'Database URL not found or invalid. Please check DATABASE_URL environment variable.'
+      });
     }
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Resource not found' });
     }
     if (error.code === 'P2002') {
       return res.status(409).json({ error: 'Duplicate entry' });
+    }
+    
+    // If it's a query error, try without case-insensitive mode
+    if (q && error.message && error.message.includes('insensitive')) {
+      try {
+        console.log('Retrying search without case-insensitive mode...');
+        const schools = await prisma.school.findMany({
+          where: {
+            name: { contains: q.trim() }
+          },
+          orderBy: { name: 'asc' },
+          include: {
+            _count: {
+              select: { ras: true },
+            },
+          },
+          take: 20,
+        });
+        return res.json(schools || []);
+      } catch (retryError) {
+        console.error('Retry also failed:', retryError);
+      }
     }
     
     // Generic error response
