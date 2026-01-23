@@ -203,8 +203,13 @@ router.get('/', async (req, res, next) => {
 /**
  * GET /api/schools/:id
  * Get school details
+ * NOTE: This must come after /test route
  */
 router.get('/:id', async (req, res, next) => {
+  // Don't treat 'test' as an ID
+  if (req.params.id === 'test') {
+    return next();
+  }
   try {
     const { id } = req.params;
 
