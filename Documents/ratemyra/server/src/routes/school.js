@@ -21,45 +21,68 @@ router.get('/', async (req, res, next) => {
     // Build where clause
     const searchTerm = q ? q.trim() : '';
     
-    // Try case-insensitive search, fallback to case-sensitive if needed
-    let schools;
-    const queryOptions = {
+    // Build base query options
+    const baseQuery = {
       orderBy: { name: 'asc' },
-      include: {
-        _count: {
-          select: { ras: true },
-        },
-      },
       take: searchTerm ? 20 : 1000,
     };
     
-    if (searchTerm) {
-      // Try case-insensitive first
-      try {
-        schools = await prisma.school.findMany({
-          where: {
-            name: { contains: searchTerm, mode: 'insensitive' }
+    // Try with _count first, fallback without if it fails
+    let schools;
+    try {
+      schools = await prisma.school.findMany({
+        where: searchTerm ? {
+          name: { contains: searchTerm, mode: 'insensitive' }
+        } : {},
+        ...baseQuery,
+        include: {
+          _count: {
+            select: { ras: true },
           },
-          ...queryOptions,
+        },
+      });
+    } catch (error) {
+      console.error('Query with _count failed:', error.message);
+      console.error('Error code:', error.code);
+      
+      // Try without _count include
+      try {
+        console.log('Retrying without _count include...');
+        schools = await prisma.school.findMany({
+          where: searchTerm ? {
+            name: { contains: searchTerm, mode: 'insensitive' }
+          } : {},
+          ...baseQuery,
         });
-      } catch (insensitiveError) {
-        console.error('Case-insensitive search failed:', insensitiveError.message);
-        // Fallback to case-sensitive
-        try {
-          schools = await prisma.school.findMany({
-            where: {
-              name: { contains: searchTerm }
-            },
-            ...queryOptions,
-          });
-        } catch (fallbackError) {
-          console.error('Case-sensitive fallback also failed:', fallbackError.message);
-          throw insensitiveError; // Throw original error
+        
+        // Manually add _count as 0 for now
+        schools = schools.map(school => ({
+          ...school,
+          _count: { ras: 0 }
+        }));
+      } catch (fallbackError) {
+        console.error('Fallback query also failed:', fallbackError.message);
+        // Try case-sensitive without _count
+        if (searchTerm) {
+          try {
+            schools = await prisma.school.findMany({
+              where: {
+                name: { contains: searchTerm }
+              },
+              ...baseQuery,
+            });
+            schools = schools.map(school => ({
+              ...school,
+              _count: { ras: 0 }
+            }));
+          } catch (finalError) {
+            console.error('All query attempts failed');
+            throw error; // Throw original error
+          }
+        } else {
+          throw error;
         }
       }
-    } else {
-      // No search term, get all schools
-      schools = await prisma.school.findMany(queryOptions);
     }
 
     // Always return an array, even if empty
