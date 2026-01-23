@@ -41,18 +41,24 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const searchSchools = async (term) => {
-    if (!term || term.trim().length < 2) {
-      setSchools([]);
-      setShowDropdown(false);
-      return;
-    }
-
+  const searchSchools = async (term, showAll = false) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await api.get(`/api/schools?q=${encodeURIComponent(term.trim())}`);
+      let url = '/api/schools';
+      if (term && term.trim().length > 0) {
+        url += `?q=${encodeURIComponent(term.trim())}`;
+      } else if (showAll) {
+        // Show popular schools when input is empty
+        url += '?limit=50';
+      } else {
+        setSchools([]);
+        setLoading(false);
+        return;
+      }
+
+      const response = await api.get(url);
       const schoolsData = Array.isArray(response.data) ? response.data : [];
       setSchools(schoolsData);
       setShowDropdown(true);
@@ -70,6 +76,7 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
       } else {
         setError('Failed to search schools. Please try again.');
       }
+      setSchools([]);
     } finally {
       setLoading(false);
     }
@@ -78,7 +85,13 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    searchSchools(value);
+    // Search immediately, even with 1 character
+    if (value.trim().length > 0) {
+      searchSchools(value, false);
+    } else {
+      // Show popular schools when input is cleared
+      searchSchools('', true);
+    }
   };
 
   const handleSelectSchool = (school) => {
@@ -105,7 +118,10 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={() => {
-            if (schools.length > 0) {
+            // Show popular schools when input is focused and empty
+            if (!searchTerm.trim() && schools.length === 0) {
+              searchSchools('', true);
+            } else if (schools.length > 0) {
               setShowDropdown(true);
             }
           }}
@@ -132,17 +148,24 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
 
       {showDropdown && schools.length > 0 && (
         <div ref={dropdownRef} className="school-search-dropdown">
+          {!searchTerm.trim() && (
+            <div className="school-search-header">
+              <strong>Popular Schools</strong>
+              <span className="school-search-hint">Type to search...</span>
+            </div>
+          )}
           {schools.map((school) => (
             <div
               key={school.id}
               className="school-search-item"
               onClick={() => handleSelectSchool(school)}
+              onMouseDown={(e) => e.preventDefault()} // Prevent input blur
             >
               <div className="school-search-item-name">{school.name}</div>
               {school.location && (
                 <div className="school-search-item-location">{school.location}</div>
               )}
-              {school._count && (
+              {school._count && school._count.ras > 0 && (
                 <div className="school-search-item-count">
                   {school._count.ras} {school._count.ras === 1 ? 'RA' : 'RAs'}
                 </div>
@@ -152,7 +175,7 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
         </div>
       )}
 
-      {showDropdown && searchTerm.length >= 2 && schools.length === 0 && !loading && (
+      {showDropdown && searchTerm.trim().length > 0 && schools.length === 0 && !loading && (
         <div ref={dropdownRef} className="school-search-dropdown">
           <div className="school-search-no-results">
             No schools found. Try a different search term.

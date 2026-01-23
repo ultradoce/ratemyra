@@ -76,6 +76,29 @@
   z-index: 1000;
 }
 
+.school-search-header {
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.school-search-header strong {
+  color: #333;
+  font-size: 14px;
+}
+
+.school-search-hint {
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+}
+
 .school-search-item {
   padding: 16px 20px;
   cursor: pointer;
