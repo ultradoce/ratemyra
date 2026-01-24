@@ -145,7 +145,8 @@ function getRandomTags() {
   return shuffled.slice(0, numTags);
 }
 
-export async function seedFakeData() {
+export async function seedFakeData(prismaInstance = null) {
+  const db = prismaInstance || prisma;
   console.log('🎭 Starting to seed fake data...\n');
 
   try {
@@ -158,7 +159,7 @@ export async function seedFakeData() {
 
     for (const schoolName of schoolsToSeed) {
       // Find school
-      const school = await prisma.school.findFirst({
+      const school = await db.school.findFirst({
         where: {
           name: {
             contains: schoolName,
@@ -188,7 +189,7 @@ export async function seedFakeData() {
         const dormWithMarker = `[FAKE]${dorm}`;
 
         try {
-          const ra = await prisma.rA.create({
+          const ra = await db.rA.create({
             data: {
               firstName,
               lastName,
@@ -224,7 +225,7 @@ export async function seedFakeData() {
 
             const ratingOverall = (ratingClarity + ratingHelpfulness) / 2;
 
-            await prisma.review.create({
+            await db.review.create({
               data: {
                 raId: ra.id,
                 semesters,
@@ -265,7 +266,10 @@ export async function seedFakeData() {
     console.error('❌ Error seeding fake data:', error);
     throw error;
   } finally {
-    await prisma.$disconnect();
+    // Only disconnect if we created our own instance
+    if (!prismaInstance) {
+      await prisma.$disconnect();
+    }
   }
 }
 

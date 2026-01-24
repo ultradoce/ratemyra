@@ -195,7 +195,8 @@ const setupHandler = async (req, res) => {
     const results = {
       migrations: { success: false, message: '' },
       seeding: { success: false, message: '', created: 0, skipped: 0 },
-      cleanup: { success: false, message: '' }
+      cleanup: { success: false, message: '' },
+      fakeData: { success: false, message: '' }
     };
 
     // Step 1: Run migrations
@@ -357,6 +358,26 @@ const setupHandler = async (req, res) => {
     } catch (cleanupError) {
       console.error('❌ Tag cleanup error:', cleanupError);
       results.cleanup.message = cleanupError.message || 'Tag cleanup failed';
+    }
+
+    // Step 5: Seed fake data (optional, for demo/testing)
+    try {
+      console.log('🎭 Seeding fake data for popular schools...');
+      const { seedFakeData } = await import('../scripts/seed-fake-data.js');
+      const fakeDataResult = await seedFakeData(prisma);
+      results.fakeData = {
+        success: true,
+        message: `Created ${fakeDataResult.created || 0} fake RAs and ${fakeDataResult.reviews || 0} fake reviews`,
+        rasCreated: fakeDataResult.created || 0,
+        reviewsCreated: fakeDataResult.reviews || 0,
+      };
+      console.log(`✅ Fake data seeding completed: ${fakeDataResult.created || 0} RAs, ${fakeDataResult.reviews || 0} reviews`);
+    } catch (fakeDataError) {
+      console.error('❌ Fake data seeding error:', fakeDataError);
+      results.fakeData = {
+        success: false,
+        message: fakeDataError.message || 'Fake data seeding failed',
+      };
     }
 
     const allSuccess = results.migrations.success && results.seeding.success;
