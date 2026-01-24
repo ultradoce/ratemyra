@@ -22,33 +22,62 @@ const prisma = new PrismaClient();
 // Zero-width space marker for fake reviews
 const FAKE_MARKER = '\u200B'; // Zero-width space (invisible)
 
-// Real Georgia Tech residence halls
-const GT_DORMS = [
-  'Armstrong Hall',
-  'Brown Hall',
-  'Caldwell Hall',
-  'Center Street North',
-  'Center Street South',
-  'Folk Hall',
-  'Fitten Hall',
-  'Field Hall',
-  'Fulmer Hall',
-  'Glenn Hall',
-  'Hanson Hall',
-  'Harris Hall',
-  'Harrison Hall',
-  'Heisman Hall',
-  'Hopkins Hall',
-  'Howell Hall',
-  'Matheson Hall',
-  'Montag Hall',
-  'North Avenue Apartments',
-  'Perry Hall',
-  'Smith Hall',
-  'Stein Hall',
-  'Towers Hall',
-  'Woodruff Hall',
-];
+// Real residence halls by school
+const SCHOOL_DORMS = {
+  'Georgia Institute of Technology': [
+    'Armstrong Hall', 'Brown Hall', 'Caldwell Hall', 'Center Street North',
+    'Center Street South', 'Folk Hall', 'Fitten Hall', 'Field Hall',
+    'Fulmer Hall', 'Glenn Hall', 'Hanson Hall', 'Harris Hall',
+    'Harrison Hall', 'Heisman Hall', 'Hopkins Hall', 'Howell Hall',
+    'Matheson Hall', 'Montag Hall', 'North Avenue Apartments', 'Perry Hall',
+    'Smith Hall', 'Stein Hall', 'Towers Hall', 'Woodruff Hall',
+  ],
+  'Harvard University': [
+    'Adams House', 'Cabot House', 'Currier House', 'Dunster House',
+    'Eliot House', 'Kirkland House', 'Leverett House', 'Lowell House',
+    'Mather House', 'Pforzheimer House', 'Quincy House', 'Winthrop House',
+  ],
+  'Massachusetts Institute of Technology': [
+    'Baker House', 'Burton-Conner House', 'East Campus', 'MacGregor House',
+    'Maseeh Hall', 'McCormick Hall', 'New House', 'New Vassar',
+    'Next House', 'Random Hall', 'Simmons Hall',
+  ],
+  'Stanford University': [
+    'Branner Hall', 'Crothers Hall', 'Florence Moore Hall', 'Gerhard Casper Quad',
+    'Governor\'s Corner', 'Lagunita Court', 'Roble Hall', 'Stern Hall',
+    'Toyon Hall', 'Wilbur Hall',
+  ],
+  'University of California, Berkeley': [
+    'Bowles Hall', 'Clark Kerr Campus', 'Foothill', 'Martinez Commons',
+    'Stern Hall', 'Unit 1', 'Unit 2', 'Unit 3', 'Unit 4',
+  ],
+  'University of California, Los Angeles': [
+    'De Neve', 'Dykstra Hall', 'Hedrick Hall', 'Rieber Hall',
+    'Rieber Terrace', 'Saxon Suites', 'Sproul Hall', 'Sunset Village',
+  ],
+  'University of Michigan': [
+    'Alice Lloyd Hall', 'Bursley Hall', 'Couzens Hall', 'East Quad',
+    'Markley Hall', 'Martha Cook Building', 'Mosher-Jordan Hall', 'North Quad',
+    'Oxford Houses', 'South Quad', 'Stockwell Hall', 'West Quad',
+  ],
+  'University of Texas at Austin': [
+    'Brackenridge Hall', 'Carothers Hall', 'Creekside', 'Duren Hall',
+    'Jester Center', 'Kinsolving Hall', 'Littlefield Hall', 'Moore-Hill',
+    'Roberts Hall', 'San Jacinto Hall', 'Whitis Court',
+  ],
+  'University of Pennsylvania': [
+    'Fisher Hassenfeld College House', 'Gregory College House', 'Harrison College House',
+    'Hill College House', 'Kings Court English', 'Lauder College House',
+    'Riepe College House', 'Rodin College House', 'Stouffer College House',
+    'Ware College House', 'Wynn College House',
+  ],
+  'Yale University': [
+    'Berkeley College', 'Branford College', 'Davenport College', 'Ezra Stiles College',
+    'Grace Hopper College', 'Jonathan Edwards College', 'Morse College',
+    'Pauli Murray College', 'Pierson College', 'Saybrook College',
+    'Silliman College', 'Timothy Dwight College', 'Trumbull College',
+  ],
+};
 
 // Fake first names
 const FIRST_NAMES = [
@@ -120,98 +149,104 @@ export async function seedFakeData() {
   console.log('🎭 Starting to seed fake data...\n');
 
   try {
-    // Find Georgia Tech
-    const georgiaTech = await prisma.school.findFirst({
-      where: {
-        name: {
-          contains: 'Georgia Institute of Technology',
-          mode: 'insensitive',
-        },
-      },
-    });
-
-    if (!georgiaTech) {
-      console.log('❌ Georgia Tech not found. Please seed schools first.');
-      return { created: 0, skipped: 0 };
-    }
-
-    console.log(`✅ Found: ${georgiaTech.name}\n`);
-
     const fakeRAIds = [];
     let rasCreated = 0;
     let reviewsCreated = 0;
 
-    // Create 15-20 fake RAs
-    const numRAs = 18;
-    
-    for (let i = 0; i < numRAs; i++) {
-      const firstName = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
-      const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
-      const dorm = GT_DORMS[Math.floor(Math.random() * GT_DORMS.length)];
-      const floor = `${Math.floor(Math.random() * 5) + 1}${['st', 'nd', 'rd', 'th'][Math.min(Math.floor(Math.random() * 4), 3)]} Floor`;
-      
-      // Add hidden marker: [FAKE] prefix (will be searchable but looks normal in UI)
-      const dormWithMarker = `[FAKE]${dorm}`;
+    // Schools to seed fake data for
+    const schoolsToSeed = Object.keys(SCHOOL_DORMS);
 
-      try {
-        const ra = await prisma.rA.create({
-          data: {
-            firstName,
-            lastName,
-            schoolId: georgiaTech.id,
-            dorm: dormWithMarker,
-            floor,
+    for (const schoolName of schoolsToSeed) {
+      // Find school
+      const school = await prisma.school.findFirst({
+        where: {
+          name: {
+            contains: schoolName,
+            mode: 'insensitive',
           },
-        });
+        },
+      });
 
-        fakeRAIds.push(ra.id);
-        rasCreated++;
-        console.log(`✅ Created RA: ${firstName} ${lastName} (${dorm})`);
+      if (!school) {
+        console.log(`⏭️  Skipped: ${schoolName} (not found in database)`);
+        continue;
+      }
 
-        // Create 2-4 reviews per RA
-        const numReviews = Math.floor(Math.random() * 3) + 2;
+      console.log(`\n✅ Found: ${school.name}`);
+      const dorms = SCHOOL_DORMS[schoolName];
+      
+      // Create 12-18 fake RAs per school
+      const numRAs = Math.floor(Math.random() * 7) + 12;
+      
+      for (let i = 0; i < numRAs; i++) {
+        const firstName = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+        const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+        const dorm = dorms[Math.floor(Math.random() * dorms.length)];
+        const floor = `${Math.floor(Math.random() * 5) + 1}${['st', 'nd', 'rd', 'th'][Math.min(Math.floor(Math.random() * 4), 3)]} Floor`;
         
-        for (let j = 0; j < numReviews; j++) {
-          const ratingClarity = Math.floor(Math.random() * 2) + 3; // 3-5
-          const ratingHelpfulness = Math.floor(Math.random() * 2) + 3; // 3-5
-          const difficulty = Math.floor(Math.random() * 3) + 2; // 2-4
-          const wouldTakeAgain = Math.random() > 0.3; // 70% yes
-          const tags = getRandomTags();
-          const semesters = [getRandomSemester()];
-          
-          // Add second semester 30% of the time
-          if (Math.random() > 0.7) {
-            semesters.push(getRandomSemester());
-          }
+        // Add hidden marker: [FAKE] prefix (will be searchable but looks normal in UI)
+        const dormWithMarker = `[FAKE]${dorm}`;
 
-          const reviewText = REVIEW_TEXTS[Math.floor(Math.random() * REVIEW_TEXTS.length)];
-          // Add zero-width space marker at start (invisible)
-          const textBody = FAKE_MARKER + reviewText;
-
-          const ratingOverall = (ratingClarity + ratingHelpfulness) / 2;
-
-          await prisma.review.create({
+        try {
+          const ra = await prisma.rA.create({
             data: {
-              raId: ra.id,
-              semesters,
-              ratingClarity,
-              ratingHelpfulness,
-              ratingOverall,
-              difficulty,
-              wouldTakeAgain,
-              tags,
-              attendanceRequired: Math.random() > 0.7,
-              textBody,
-              ipHash: generateFakeIPHash(),
-              deviceFingerprintHash: generateFakeDeviceHash(),
-              status: 'ACTIVE',
+              firstName,
+              lastName,
+              schoolId: school.id,
+              dorm: dormWithMarker,
+              floor,
             },
           });
 
-          reviewsCreated++;
+          fakeRAIds.push({ id: ra.id, school: school.name, name: `${firstName} ${lastName}` });
+          rasCreated++;
+          console.log(`  ✅ Created RA: ${firstName} ${lastName} (${dorm})`);
+
+          // Create 2-4 reviews per RA
+          const numReviews = Math.floor(Math.random() * 3) + 2;
+          
+          for (let j = 0; j < numReviews; j++) {
+            const ratingClarity = Math.floor(Math.random() * 2) + 3; // 3-5
+            const ratingHelpfulness = Math.floor(Math.random() * 2) + 3; // 3-5
+            const difficulty = Math.floor(Math.random() * 3) + 2; // 2-4
+            const wouldTakeAgain = Math.random() > 0.3; // 70% yes
+            const tags = getRandomTags();
+            const semesters = [getRandomSemester()];
+            
+            // Add second semester 30% of the time
+            if (Math.random() > 0.7) {
+              semesters.push(getRandomSemester());
+            }
+
+            const reviewText = REVIEW_TEXTS[Math.floor(Math.random() * REVIEW_TEXTS.length)];
+            // Add zero-width space marker at start (invisible)
+            const textBody = FAKE_MARKER + reviewText;
+
+            const ratingOverall = (ratingClarity + ratingHelpfulness) / 2;
+
+            await prisma.review.create({
+              data: {
+                raId: ra.id,
+                semesters,
+                ratingClarity,
+                ratingHelpfulness,
+                ratingOverall,
+                difficulty,
+                wouldTakeAgain,
+                tags,
+                attendanceRequired: Math.random() > 0.7,
+                textBody,
+                ipHash: generateFakeIPHash(),
+                deviceFingerprintHash: generateFakeDeviceHash(),
+                status: 'ACTIVE',
+              },
+            });
+
+            reviewsCreated++;
+          }
+        } catch (error) {
+          console.error(`  ❌ Error creating RA ${firstName} ${lastName}:`, error.message);
         }
-      } catch (error) {
-        console.error(`❌ Error creating RA ${firstName} ${lastName}:`, error.message);
       }
     }
 
