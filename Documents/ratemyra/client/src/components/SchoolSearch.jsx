@@ -77,7 +77,10 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
       console.error('Error code:', err.code);
       
       // More specific error messages
-      if (err.response?.status === 404) {
+      if (err.response?.status === 503) {
+        const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Database not available';
+        setError(`Database not configured: ${errorMsg}. Please contact an administrator.`);
+      } else if (err.response?.status === 404) {
         setError('Schools endpoint not found. Please check if the server is running.');
       } else if (err.response?.status >= 500) {
         setError(`Server error (${err.response?.status}). Please try again later.`);
@@ -200,6 +203,24 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
             <strong>No schools in database</strong>
             <p style={{ marginTop: '8px', fontSize: '13px' }}>
               The database appears to be empty. Please contact an administrator or use the admin dashboard to seed schools.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {error && error.includes('Database not configured') && (
+        <div className="school-search-dropdown" style={{ display: 'block', position: 'relative', marginTop: '8px' }}>
+          <div className="school-search-no-results" style={{ 
+            background: '#fff3cd', 
+            border: '1px solid #ffc107',
+            borderRadius: '8px',
+            padding: '16px'
+          }}>
+            <strong style={{ color: '#856404', display: 'block', marginBottom: '8px' }}>
+              ⚠️ Database Not Configured
+            </strong>
+            <p style={{ color: '#856404', fontSize: '13px', margin: 0 }}>
+              The database needs to be set up. An administrator needs to add a PostgreSQL database in Railway.
             </p>
           </div>
         </div>
