@@ -20,6 +20,78 @@ const createRARateLimit = rateLimit({
 });
 
 /**
+ * GET /api/ras/trending
+ * Get trending/popular RAs across all schools or for a specific school
+ * MUST be defined before /:id route to avoid route conflicts
+ */
+router.get('/trending', async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { schoolId, limit = 10 } = req.query;
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+
+    const where = {};
+    if (schoolId) {
+      where.schoolId = schoolId;
+    }
+
+    // Get RAs with most reviews and highest ratings
+    const ras = await prisma.rA.findMany({
+      where,
+      include: {
+        school: true,
+        reviews: {
+          where: { status: 'ACTIVE' },
+        },
+      },
+      take: limitNum * 2, // Get more to rank
+    });
+
+    // Calculate scores and rank
+    const rasWithScores = await Promise.all(
+      ras.map(async (ra) => {
+        const reviews = ra.reviews;
+        const rating = calculateWeightedRating(reviews);
+        const reviewCount = reviews.length;
+        const wouldTakeAgainPercentage = calculateWouldTakeAgainPercentage(reviews);
+
+        // Ranking algorithm: balance between rating and review count
+        const ratingScore = rating ? rating / 5 : 0; // Normalize to 0-1
+        const volumeScore = Math.log(reviewCount + 1) / Math.log(100); // Log scale
+        const score = ratingScore * 0.6 + volumeScore * 0.4;
+
+        return {
+          id: ra.id,
+          firstName: ra.firstName,
+          lastName: ra.lastName,
+          school: ra.school,
+          dorm: ra.dorm,
+          floor: ra.floor,
+          rating,
+          totalReviews: reviewCount,
+          wouldTakeAgainPercentage,
+          score,
+        };
+      })
+    );
+
+    // Sort by score and limit
+    rasWithScores.sort((a, b) => b.score - a.score);
+    const results = rasWithScores.slice(0, limitNum).map(({ score, ...rest }) => rest);
+
+    res.json({
+      results,
+      total: results.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/ras/:id
  * Get RA profile with aggregated stats
  */
@@ -271,76 +343,5 @@ router.post(
     }
   }
 );
-
-/**
- * GET /api/ras/trending
- * Get trending/popular RAs across all schools or for a specific school
- */
-router.get('/trending', async (req, res, next) => {
-  try {
-    if (!prisma) {
-      return res.status(503).json({ error: 'Database not available' });
-    }
-
-    const { schoolId, limit = 10 } = req.query;
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
-
-    const where = {};
-    if (schoolId) {
-      where.schoolId = schoolId;
-    }
-
-    // Get RAs with most reviews and highest ratings
-    const ras = await prisma.rA.findMany({
-      where,
-      include: {
-        school: true,
-        reviews: {
-          where: { status: 'ACTIVE' },
-        },
-      },
-      take: limitNum * 2, // Get more to rank
-    });
-
-    // Calculate scores and rank
-    const rasWithScores = await Promise.all(
-      ras.map(async (ra) => {
-        const reviews = ra.reviews;
-        const rating = calculateWeightedRating(reviews);
-        const reviewCount = reviews.length;
-        const wouldTakeAgainPercentage = calculateWouldTakeAgainPercentage(reviews);
-
-        // Ranking algorithm: balance between rating and review count
-        const ratingScore = rating ? rating / 5 : 0; // Normalize to 0-1
-        const volumeScore = Math.log(reviewCount + 1) / Math.log(100); // Log scale
-        const score = ratingScore * 0.6 + volumeScore * 0.4;
-
-        return {
-          id: ra.id,
-          firstName: ra.firstName,
-          lastName: ra.lastName,
-          school: ra.school,
-          dorm: ra.dorm,
-          floor: ra.floor,
-          rating,
-          totalReviews: reviewCount,
-          wouldTakeAgainPercentage,
-          score,
-        };
-      })
-    );
-
-    // Sort by score and limit
-    rasWithScores.sort((a, b) => b.score - a.score);
-    const results = rasWithScores.slice(0, limitNum).map(({ score, ...rest }) => rest);
-
-    res.json({
-      results,
-      total: results.length,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
 
 export default router;
