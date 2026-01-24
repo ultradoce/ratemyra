@@ -11,6 +11,7 @@ import RADetail from './pages/RADetail';
 import SubmitReview from './pages/SubmitReview';
 import AddRA from './pages/AddRA';
 import SchoolRAs from './pages/SchoolRAs';
+import ReviewDetail from './pages/ReviewDetail';
 import Help from './pages/Help';
 import Guidelines from './pages/Guidelines';
 import Terms from './pages/Terms';
