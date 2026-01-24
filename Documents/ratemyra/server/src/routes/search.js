@@ -40,7 +40,7 @@ router.get('/', async (req, res, next) => {
     
     // Try cache (wrap in try-catch in case cache fails)
     let cached = null;
-    const cacheKey = cacheKeys.search(searchTerm, schoolIdStr);
+    const cacheKey = cacheKeys.search(searchTerm, schoolIdStr || 'all');
     try {
       cached = await getCache(cacheKey);
       if (cached) {
