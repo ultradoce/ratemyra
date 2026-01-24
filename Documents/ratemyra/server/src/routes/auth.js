@@ -99,6 +99,10 @@ router.post(
   ],
   async (req, res, next) => {
     try {
+      if (!prisma) {
+        return res.status(503).json({ error: 'Database not available' });
+      }
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });

@@ -1,7 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { getPrismaClient } from '../utils/prisma.js';
 
 /**
  * Middleware to verify JWT token
@@ -16,6 +14,12 @@ export async function authenticateToken(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Get Prisma client
+    const prisma = getPrismaClient();
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
     
     // Verify user still exists and get fresh user data
     const user = await prisma.user.findUnique({
