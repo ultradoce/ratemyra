@@ -44,11 +44,17 @@ router.get('/', async (req, res, next) => {
       });
     }
     
-    // Try cache
-    const cacheKey = cacheKeys.search(searchTerm, schoolId);
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      return res.json(cached);
+    // Try cache (wrap in try-catch in case cache fails)
+    let cached = null;
+    try {
+      const cacheKey = cacheKeys.search(searchTerm, schoolIdStr);
+      cached = await getCache(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
+    } catch (cacheError) {
+      console.warn('Cache error (non-fatal):', cacheError.message);
+      // Continue without cache
     }
 
     // Build search query - schoolId is required
@@ -62,12 +68,26 @@ router.get('/', async (req, res, next) => {
     };
 
     // Fetch RAs
+    // Note: If migration hasn't run, this might fail. The migration adds userId, helpfulCount, notHelpfulCount to Review
     const ras = await prisma.rA.findMany({
       where,
       include: {
         school: true,
         reviews: {
           where: { status: 'ACTIVE' },
+          select: {
+            id: true,
+            ratingClarity: true,
+            ratingHelpfulness: true,
+            ratingOverall: true,
+            difficulty: true,
+            wouldTakeAgain: true,
+            tags: true,
+            textBody: true,
+            timestamp: true,
+            // Only select fields that exist in current DB (userId, helpfulCount, notHelpfulCount may not exist yet)
+            // Prisma will handle missing fields gracefully if we don't select them
+          },
         },
       },
       take: parseInt(limit) * 2, // Get more to rank, then limit
