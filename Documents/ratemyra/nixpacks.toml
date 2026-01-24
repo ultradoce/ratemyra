@@ -10,21 +10,14 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "echo '🔨 Starting build phase...'",
-  "echo '📦 Building Prisma client...'",
-  "(cd server && npx prisma generate || echo '⚠️ Prisma generate failed (non-critical)')",
-  "echo '🎨 Building frontend...'",
-  "(cd client && rm -rf dist && npm run build)",
-  "echo '✅ Verifying build output...'",
-  "(cd client && test -d dist && echo '✅ dist/ folder exists' && ls -la dist/ | head -10 || (echo '❌ dist/ folder NOT found!' && exit 1))",
-  "echo '✅ Build phase completed successfully!'"
+  "cd server && npx prisma generate || echo 'Prisma generate failed (non-critical)'",
+  "cd client && rm -rf dist && npm run build",
+  "cd client && test -d dist || (echo 'Build failed: dist/ folder not found' && exit 1)"
 ]
 
 [phases.release]
 cmds = [
-  "echo '🔄 Release phase: Running migrations...'",
-  "echo 'DATABASE_URL available:' $([ -n \"$DATABASE_URL\" ] && echo 'YES' || echo 'NO')",
-  "(cd server && npx prisma migrate deploy 2>&1 || (echo '⚠️ Migration command failed' && echo 'Exit code:' $? && echo 'This is OK - migrations can be run via /api/setup'))"
+  "cd server && npx prisma migrate deploy || echo 'Migration failed - can be run via /api/setup'"
 ]
 
 [start]
