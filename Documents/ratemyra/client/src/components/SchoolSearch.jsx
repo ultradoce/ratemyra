@@ -8,6 +8,7 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [error, setError] = useState(null);
+  const [hasCheckedDatabase, setHasCheckedDatabase] = useState(false);
   const searchRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -60,7 +61,10 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
       console.log('Number of schools:', schoolsData.length);
       
       setSchools(schoolsData);
-      if (schoolsData.length > 0) {
+      setHasCheckedDatabase(true);
+      
+      // Show dropdown if we have schools OR if we're showing "no results" message
+      if (schoolsData.length > 0 || (!term && showAll)) {
         setShowDropdown(true);
       } else {
         setShowDropdown(false);
@@ -190,10 +194,13 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
         </div>
       )}
 
-      {showDropdown && !searchTerm.trim() && schools.length === 0 && !loading && !error && (
+      {showDropdown && !searchTerm.trim() && schools.length === 0 && !loading && !error && hasCheckedDatabase && (
         <div ref={dropdownRef} className="school-search-dropdown">
           <div className="school-search-no-results">
-            No schools in database. Please contact an administrator to add schools.
+            <strong>No schools in database</strong>
+            <p style={{ marginTop: '8px', fontSize: '13px' }}>
+              The database appears to be empty. Please contact an administrator or use the admin dashboard to seed schools.
+            </p>
           </div>
         </div>
       )}
