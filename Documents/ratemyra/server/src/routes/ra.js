@@ -162,7 +162,8 @@ router.get('/:id', async (req, res, next) => {
     }
 
     // Calculate aggregated stats
-    const activeReviews = ra.reviews.filter(r => r.status === 'ACTIVE');
+    // Reviews are already filtered by status: 'ACTIVE' in the query, so use them directly
+    const activeReviews = ra.reviews || [];
     const weightedRating = calculateWeightedRating(activeReviews);
     const ratingDistribution = getRatingDistribution(activeReviews);
     const averageDifficulty = calculateAverageDifficulty(activeReviews);

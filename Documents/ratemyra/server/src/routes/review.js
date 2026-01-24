@@ -325,12 +325,10 @@ router.get('/:raId', async (req, res, next) => {
           difficulty: true,
           wouldTakeAgain: true,
           tags: true,
-          helpfulCount: true,
-          notHelpfulCount: true,
-          userId: true,
           attendanceRequired: true,
           textBody: true,
           timestamp: true,
+          // Don't select helpfulCount, notHelpfulCount, userId - they may not exist until migration runs
           // Don't expose IP hash or device fingerprint
         },
       }),
