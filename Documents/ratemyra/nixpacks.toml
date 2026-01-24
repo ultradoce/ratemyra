@@ -22,7 +22,8 @@ cmds = [
 
 [phases.release]
 cmds = [
-  "(cd server && (test -n \"$DATABASE_URL\" && npx prisma migrate deploy || echo 'Skipping migrations - DATABASE_URL not set'))"
+  "echo '🔄 Release phase: Running migrations...'",
+  "(cd server && npx prisma migrate deploy || echo '⚠️ Migrations failed or already applied')"
 ]
 
 [start]

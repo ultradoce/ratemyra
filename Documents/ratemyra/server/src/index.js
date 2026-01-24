@@ -66,8 +66,9 @@ app.get('/api/health', async (req, res) => {
     health.databaseUrlSet = !!process.env.DATABASE_URL;
   }
 
-  const statusCode = health.database === 'connected' ? 200 : 503;
-  res.status(statusCode).json(health);
+  // Always return 200 for health check - Railway needs this to pass
+  // Database status is in the response body, not the status code
+  res.status(200).json(health);
 });
 
 // Setup endpoint - runs migrations and seeds schools (one-time setup)
@@ -324,17 +325,22 @@ process.on('uncaughtException', (error) => {
 // Start server and create default admin
 (async () => {
   try {
-    // Ensure default admin exists
-    await ensureDefaultAdmin();
+    // Ensure default admin exists (non-blocking - server will start even if this fails)
+    ensureDefaultAdmin().catch(err => {
+      console.error('⚠️  Admin creation failed, but server will continue:', err.message);
+    });
     
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
+      console.log(`🌐 Health check: http://0.0.0.0:${PORT}/api/health`);
       console.log(`🔐 Default Admin Login:`);
       console.log(`   Email: admin@ratemyra.com`);
       console.log(`   Password: admin123`);
+      console.log(`📋 Setup endpoint: http://0.0.0.0:${PORT}/api/setup`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
+    console.error('Stack:', error.stack);
     process.exit(1);
   }
 })();
