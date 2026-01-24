@@ -37,7 +37,7 @@ function RASearch() {
   };
 
   useEffect(() => {
-    if (query && schoolId) {
+    if (query) {
       performSearch(query, schoolId);
     }
   }, [query, schoolId]);
@@ -66,11 +66,6 @@ function RASearch() {
   const performSearch = async (term, schoolIdParam) => {
     const targetSchoolId = schoolIdParam || schoolId;
     
-    if (!targetSchoolId) {
-      setError('Please select a school first');
-      return;
-    }
-
     if (!term.trim()) {
       setResults([]);
       return;
@@ -80,11 +75,16 @@ function RASearch() {
     setError(null);
 
     try {
-      const response = await axios.get(`/api/search?schoolId=${targetSchoolId}&q=${encodeURIComponent(term)}`);
+      // Build URL with optional schoolId
+      const url = targetSchoolId
+        ? `/api/search?schoolId=${targetSchoolId}&q=${encodeURIComponent(term)}`
+        : `/api/search?q=${encodeURIComponent(term)}`;
+      
+      const response = await axios.get(url);
       setResults(response.data.results || []);
     } catch (err) {
       if (err.response?.status === 400) {
-        setError(err.response.data.error || 'Please select a school first');
+        setError(err.response.data.error || 'Failed to search');
       } else {
         setError('Failed to search. Please try again.');
       }
@@ -96,14 +96,15 @@ function RASearch() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!selectedSchool) {
-      setError('Please select a school first');
-      return;
-    }
     if (searchTerm.trim()) {
-      const newUrl = `/search?schoolId=${selectedSchool.id}&q=${encodeURIComponent(searchTerm.trim())}`;
+      const params = new URLSearchParams();
+      if (selectedSchool) {
+        params.set('schoolId', selectedSchool.id);
+      }
+      params.set('q', searchTerm.trim());
+      const newUrl = `/search?${params.toString()}`;
       window.history.pushState({}, '', newUrl);
-      performSearch(searchTerm.trim(), selectedSchool.id);
+      performSearch(searchTerm.trim(), selectedSchool?.id);
     }
   };
 
@@ -127,17 +128,18 @@ function RASearch() {
             />
           </div>
 
-          {selectedSchool && (
-            <div className="search-form">
-              <label className="search-label">Search for an RA</label>
-              <RASearchAutocomplete
-                schoolId={selectedSchool.id}
-                selectedRA={selectedRA}
-                onSelectRA={handleRASelect}
-                placeholder={`Search by name or dorm at ${selectedSchool.name}...`}
-              />
-            </div>
-          )}
+          <div className="search-form">
+            <label className="search-label">Search for an RA</label>
+            <RASearchAutocomplete
+              schoolId={selectedSchool?.id || null}
+              selectedRA={selectedRA}
+              onSelectRA={handleRASelect}
+              placeholder={selectedSchool 
+                ? `Search by name or dorm at ${selectedSchool.name}...`
+                : "Search for an RA by name (across all schools)..."
+              }
+            />
+          </div>
         </div>
 
         <div className="add-ra-cta">

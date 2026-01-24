@@ -4,7 +4,7 @@ import api from '../config/api';
 import StarRating from './StarRating';
 import './RASearchAutocomplete.css';
 
-function RASearchAutocomplete({ schoolId, selectedRA, onSelectRA, placeholder = "Search for an RA..." }) {
+function RASearchAutocomplete({ schoolId = null, selectedRA, onSelectRA, placeholder = "Search for an RA..." }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [ras, setRAs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,12 +40,6 @@ function RASearchAutocomplete({ schoolId, selectedRA, onSelectRA, placeholder = 
   }, []);
 
   const searchRAs = async (term) => {
-    if (!schoolId) {
-      setRAs([]);
-      setShowDropdown(false);
-      return;
-    }
-
     // Allow searches with at least 1 character
     if (!term || term.trim().length < 1) {
       setRAs([]);
@@ -57,7 +51,12 @@ function RASearchAutocomplete({ schoolId, selectedRA, onSelectRA, placeholder = 
     setError(null);
 
     try {
-      const response = await api.get(`/api/search?schoolId=${schoolId}&q=${encodeURIComponent(term.trim())}&limit=10`);
+      // Build URL with optional schoolId
+      const url = schoolId 
+        ? `/api/search?schoolId=${schoolId}&q=${encodeURIComponent(term.trim())}&limit=10`
+        : `/api/search?q=${encodeURIComponent(term.trim())}&limit=10`;
+      
+      const response = await api.get(url);
       const results = response.data.results || [];
       
       setRAs(results);

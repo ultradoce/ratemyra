@@ -21,14 +21,8 @@ router.get('/', async (req, res, next) => {
     console.log('Search endpoint called:', { q, schoolId, limit, queryKeys: Object.keys(req.query) });
 
     // Validate schoolId - handle both string and non-string values
+    // schoolId is now optional - if not provided, search across all schools
     const schoolIdStr = schoolId ? String(schoolId).trim() : '';
-    if (!schoolIdStr || schoolIdStr.length === 0) {
-      console.error('Search endpoint: Missing or invalid schoolId', { schoolId, q, limit, type: typeof schoolId });
-      return res.status(400).json({ 
-        error: 'School ID is required',
-        received: { schoolId, q, limit }
-      });
-    }
 
     // Allow empty or very short queries - just return empty results
     const searchTerm = q ? String(q).trim() : '';
@@ -57,15 +51,19 @@ router.get('/', async (req, res, next) => {
       // Continue without cache
     }
 
-    // Build search query - schoolId is required
+    // Build search query - schoolId is optional
     const where = {
-      schoolId: schoolIdStr,
       OR: [
         { firstName: { contains: searchTerm, mode: 'insensitive' } },
         { lastName: { contains: searchTerm, mode: 'insensitive' } },
         { dorm: { contains: searchTerm, mode: 'insensitive' } },
       ],
     };
+    
+    // If schoolId is provided, filter by school
+    if (schoolIdStr && schoolIdStr.length > 0) {
+      where.schoolId = schoolIdStr;
+    }
 
     // Fetch RAs
     // Use include but only select review fields that definitely exist (migration may not have run yet)
