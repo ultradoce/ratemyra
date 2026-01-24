@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import StarRating from '../components/StarRating';
 import './SubmitReview.css';
 
 const REVIEW_TAGS = {
@@ -153,24 +152,32 @@ function EditReview() {
           <div className="form-group">
             <label>Clarity Rating *</label>
             <div className="rating-input">
-              <StarRating
-                rating={formData.ratingClarity}
-                onRatingChange={(rating) => setFormData(prev => ({ ...prev, ratingClarity: rating }))}
-                interactive
-              />
-              <span className="rating-value">{formData.ratingClarity}/5</span>
+              {[1, 2, 3, 4, 5].map(num => (
+                <button
+                  key={num}
+                  type="button"
+                  className={`rating-btn ${formData.ratingClarity === num ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, ratingClarity: num }))}
+                >
+                  {num}
+                </button>
+              ))}
             </div>
           </div>
 
           <div className="form-group">
             <label>Helpfulness Rating *</label>
             <div className="rating-input">
-              <StarRating
-                rating={formData.ratingHelpfulness}
-                onRatingChange={(rating) => setFormData(prev => ({ ...prev, ratingHelpfulness: rating }))}
-                interactive
-              />
-              <span className="rating-value">{formData.ratingHelpfulness}/5</span>
+              {[1, 2, 3, 4, 5].map(num => (
+                <button
+                  key={num}
+                  type="button"
+                  className={`rating-btn ${formData.ratingHelpfulness === num ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, ratingHelpfulness: num }))}
+                >
+                  {num}
+                </button>
+              ))}
             </div>
           </div>
 
