@@ -71,6 +71,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Setup endpoint - runs migrations and seeds schools (one-time setup)
+// Can be called via GET (browser) or POST
 app.post('/api/setup', async (req, res) => {
   try {
     if (!prisma) {
@@ -148,7 +149,10 @@ app.post('/api/setup', async (req, res) => {
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
-});
+};
+
+app.get('/api/setup', setupHandler);
+app.post('/api/setup', setupHandler);
 
 // Routes
 app.use('/api/ras', raRoutes);
