@@ -408,9 +408,14 @@ if (process.env.NODE_ENV === 'production') {
     }));
     
     // Serve React app for all non-API routes (SPA routing)
+    // This must come AFTER all API routes but BEFORE error handler
     app.get('*', (req, res, next) => {
-      // Skip API routes
+      // Skip API routes - let them fall through to 404 handler
       if (req.path.startsWith('/api')) {
+        return next();
+      }
+      // Skip static file requests (they're handled by express.static above)
+      if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
         return next();
       }
       const indexPath = path.join(clientPath, 'index.html');
