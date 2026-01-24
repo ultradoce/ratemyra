@@ -1,0 +1,21 @@
+{
+  "steps": [
+    {
+      "name": "install",
+      "commands": [
+        "npm install || true",
+        "cd server && npm install",
+        "cd client && npm install"
+      ]
+    },
+    {
+      "name": "build",
+      "commands": [
+        "cd server && npx prisma generate || echo 'Prisma generate failed (non-critical)'",
+        "cd client && rm -rf dist && npm run build",
+        "cd client && test -d dist || (echo 'Build failed: dist/ folder not found' && exit 1)"
+      ]
+    }
+  ],
+  "start": "cd server && npm start"
+}
