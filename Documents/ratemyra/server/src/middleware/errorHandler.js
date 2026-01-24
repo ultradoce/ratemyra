@@ -4,12 +4,19 @@
 
 export function errorHandler(err, req, res, next) {
   // Log error for debugging
+  console.error('========== ERROR HANDLER ==========');
+  console.error('URL:', req.method, req.url);
   console.error('Error:', err);
+  console.error('Error name:', err.name);
   console.error('Error code:', err.code);
   console.error('Error message:', err.message);
   if (err.stack) {
     console.error('Stack trace:', err.stack);
   }
+  if (err.meta) {
+    console.error('Error meta:', err.meta);
+  }
+  console.error('===================================');
 
   // Prisma errors
   if (err.code && err.code.startsWith('P')) {
@@ -57,12 +64,17 @@ export function errorHandler(err, req, res, next) {
   const status = err.status || err.statusCode || 500;
   const message = err.message || 'Internal server error';
 
-  res.status(status).json({
+  // Always include error code and message in response
+  const response = {
     error: message,
-    ...(process.env.NODE_ENV === 'development' && {
-      stack: err.stack,
-      code: err.code,
-      details: err,
-    }),
-  });
+    code: err.code || 'UNKNOWN_ERROR',
+  };
+
+  // Include stack trace in development or if explicitly requested
+  if (process.env.NODE_ENV === 'development' || req.query.debug === 'true') {
+    response.stack = err.stack;
+    response.details = err;
+  }
+
+  res.status(status).json(response);
 }

@@ -45,15 +45,18 @@ router.get('/test', async (req, res) => {
  * List all schools (with optional search)
  */
 router.get('/', async (req, res, next) => {
+  const { q, limit } = req.query;
+  
   try {
-    const { q, limit } = req.query;
-    
     console.log('GET /api/schools - Query params:', { q, limit });
     
     // Handle case where Prisma might not be initialized or database not connected
     if (!prisma) {
       console.error('Prisma client not initialized');
-      return res.status(500).json({ error: 'Database connection error' });
+      return res.status(503).json({ 
+        error: 'Database not available',
+        message: 'Database connection is not configured. Please add PostgreSQL database in Railway.'
+      });
     }
     
     const searchTerm = q ? q.trim() : '';
@@ -171,7 +174,7 @@ router.get('/', async (req, res, next) => {
     }
     
     // If it's a query error, try without case-insensitive mode
-    if (q && error.message && error.message.includes('insensitive')) {
+    if (q && prisma && error.message && error.message.includes('insensitive')) {
       try {
         console.log('Retrying search without case-insensitive mode...');
         const schools = await prisma.school.findMany({
@@ -179,14 +182,17 @@ router.get('/', async (req, res, next) => {
             name: { contains: q.trim() }
           },
           orderBy: { name: 'asc' },
-          include: {
-            _count: {
-              select: { ras: true },
-            },
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            domain: true,
           },
           take: 20,
         });
-        return res.json(schools || []);
+        // Add _count manually
+        const schoolsWithCounts = schools.map(school => ({ ...school, _count: { ras: 0 } }));
+        return res.json(schoolsWithCounts || []);
       } catch (retryError) {
         console.error('Retry also failed:', retryError);
       }
@@ -196,7 +202,7 @@ router.get('/', async (req, res, next) => {
     return res.status(500).json({
       error: 'Failed to fetch schools',
       message: error.message || 'Unknown error',
-      code: error.code,
+      code: error.code || 'UNKNOWN_ERROR',
       ...(process.env.NODE_ENV === 'development' && {
         stack: error.stack,
         meta: error.meta
