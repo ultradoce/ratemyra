@@ -328,18 +328,72 @@ router.get('/:raId', async (req, res, next) => {
       }
     }
 
-    // Fetch reviews - use include to get all fields, then manually select what we need
-    // This is more defensive if migrations haven't run yet
-    const [reviewsRaw, total] = await Promise.all([
-      prisma.review.findMany({
-        where: {
-          raId,
-          status: status.toUpperCase(),
-        },
-        orderBy: { timestamp: 'desc' },
-        skip,
-        take: limitNum,
-      }),
+    // Fetch reviews - handle missing columns gracefully (migrations may not have run)
+    let reviewsRaw = [];
+    let total = 0;
+    
+    try {
+      // Try with all fields first
+      const result = await Promise.all([
+        prisma.review.findMany({
+          where: {
+            raId,
+            status: status.toUpperCase(),
+          },
+          orderBy: { timestamp: 'desc' },
+          skip,
+          take: limitNum,
+        }),
+        prisma.review.count({
+          where: {
+            raId,
+            status: status.toUpperCase(),
+          },
+        }),
+      ]);
+      reviewsRaw = result[0];
+      total = result[1];
+    } catch (error) {
+      // If query fails due to missing columns (like semesters), use minimal select
+      if (error.code === 'P2022' || error.message?.includes('does not exist')) {
+        console.warn('Database columns missing, using minimal query. Run migrations via /api/setup');
+        // Use minimal select - only fields that definitely exist
+        const result = await Promise.all([
+          prisma.review.findMany({
+            where: {
+              raId,
+              status: status.toUpperCase(),
+            },
+            orderBy: { timestamp: 'desc' },
+            skip,
+            take: limitNum,
+            select: {
+              id: true,
+              courseCode: true,
+              ratingClarity: true,
+              ratingHelpfulness: true,
+              ratingOverall: true,
+              difficulty: true,
+              wouldTakeAgain: true,
+              tags: true,
+              attendanceRequired: true,
+              textBody: true,
+              timestamp: true,
+            },
+          }),
+          prisma.review.count({
+            where: {
+              raId,
+              status: status.toUpperCase(),
+            },
+          }),
+        ]);
+        reviewsRaw = result[0];
+        total = result[1];
+      } else {
+        throw error;
+      }
+    }
       prisma.review.count({
         where: {
           raId,
@@ -351,16 +405,16 @@ router.get('/:raId', async (req, res, next) => {
     // Map reviews to only include safe fields (defensive against missing columns)
     const reviews = reviewsRaw.map(review => ({
       id: review.id,
-      courseCode: review.courseCode,
+      courseCode: review.courseCode || null,
       semesters: review.semesters || [],
       ratingClarity: review.ratingClarity,
       ratingHelpfulness: review.ratingHelpfulness,
       ratingOverall: review.ratingOverall,
       difficulty: review.difficulty,
-      wouldTakeAgain: review.wouldTakeAgain,
+      wouldTakeAgain: review.wouldTakeAgain ?? null,
       tags: review.tags || [],
-      attendanceRequired: review.attendanceRequired,
-      textBody: review.textBody,
+      attendanceRequired: review.attendanceRequired ?? false,
+      textBody: review.textBody || null,
       timestamp: review.timestamp,
       helpfulCount: review.helpfulCount ?? 0,
       notHelpfulCount: review.notHelpfulCount ?? 0,
