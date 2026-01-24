@@ -13,6 +13,17 @@ function Footer() {
             <Link to="/terms">Terms & Conditions</Link>
             <Link to="/privacy">Privacy Policy</Link>
           </div>
+          <div className="footer-social">
+            <span className="follow-us">Follow us:</span>
+            <a 
+              href="https://www.instagram.com/ratemyra/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="instagram-link"
+            >
+              📷 @ratemyra
+            </a>
+          </div>
           <div className="footer-copyright">
             <p>&copy; {new Date().getFullYear()} RateMyRA. All rights reserved.</p>
           </div>
