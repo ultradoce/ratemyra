@@ -25,13 +25,14 @@ function EditReview() {
   const [review, setReview] = useState(null);
   const [ra, setRA] = useState(null);
   // Generate semester options (same as SubmitReview) - up to Spring 2026
+  // Future semesters are automatically included as time progresses
   const generateSemesterOptions = () => {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth();
     const semesters = [];
     const seasons = ['Fall', 'Spring', 'Summer'];
-    const maxYear = 2026; // Cap at 2026
+    const maxYear = 2026; // Hard cap at 2026
     
     for (let yearOffset = -4; yearOffset <= 2; yearOffset++) {
       const year = currentYear + yearOffset;
@@ -42,22 +43,26 @@ function EditReview() {
       for (const season of seasons) {
         const semesterStr = `${season} ${year}`;
         
-        // Don't go beyond Spring 2026
+        // Hard cap: Don't go beyond Spring 2026
         if (year === 2026 && season !== 'Spring') continue;
         
+        // For current year, only show past and current semesters
         if (yearOffset === 0) {
           if (season === 'Fall' && currentMonth < 8) continue;
           if (season === 'Summer' && currentMonth < 5) continue;
           if (season === 'Spring' && currentMonth < 1) continue;
+          semesters.push(semesterStr);
+          continue;
         }
         
-        // For past years, show all
+        // For past years, show all semesters
         if (yearOffset < 0) {
           semesters.push(semesterStr);
         }
         
-        // For current and future (up to max), show appropriate semesters
-        if (yearOffset >= 0 && year <= maxYear) {
+        // For future years (up to maxYear), show all semesters
+        // These will automatically appear as time progresses
+        if (yearOffset > 0 && year <= maxYear) {
           semesters.push(semesterStr);
         }
       }
