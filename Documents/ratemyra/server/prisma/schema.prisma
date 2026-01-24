@@ -119,6 +119,7 @@ model User {
   school    School?  @relation(fields: [schoolId], references: [id])
   reviews   Review[]
   reviewLikes ReviewLike[]
+  helpMessages HelpMessage[]
   
   @@index([email])
   @@index([role])
@@ -142,4 +143,32 @@ model ReviewLike {
   @@unique([reviewId, ipHash, deviceFingerprintHash])
   @@index([reviewId])
   @@index([userId])
+}
+
+model HelpMessage {
+  id          String            @id @default(cuid())
+  name        String
+  email       String
+  subject     String
+  message     String            @db.Text
+  status      HelpMessageStatus @default(UNREAD)
+  userId      String?           // Optional: if submitted by logged-in user
+  adminNotes  String?           @db.Text // Admin notes/response
+  respondedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+enum HelpMessageStatus {
+  UNREAD
+  READ
+  IN_PROGRESS
+  RESOLVED
+  ARCHIVED
 }

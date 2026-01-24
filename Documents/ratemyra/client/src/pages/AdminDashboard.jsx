@@ -152,6 +152,12 @@ function AdminDashboard() {
           >
             RAs
           </button>
+          <button
+            className={`tab ${activeTab === 'help' ? 'active' : ''}`}
+            onClick={() => setActiveTab('help')}
+          >
+            Help Messages
+          </button>
         </div>
 
         <div className="admin-content">
@@ -221,6 +227,10 @@ function AdminDashboard() {
 
           {activeTab === 'ras' && (
             <RAsManagement />
+          )}
+
+          {activeTab === 'help' && (
+            <HelpMessagesManagement />
           )}
         </div>
       </div>
@@ -628,6 +638,318 @@ function HelpModal({ onClose, userEmail }) {
           </form>
         )}
       </div>
+    </div>
+  );
+}
+
+function HelpMessagesManagement() {
+  const [messages, setMessages] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [adminNotes, setAdminNotes] = useState('');
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    fetchMessages();
+    fetchStats();
+  }, [statusFilter]);
+
+  const fetchMessages = async () => {
+    setLoading(true);
+    try {
+      const params = statusFilter !== 'all' ? { status: statusFilter } : {};
+      const response = await axios.get('/api/help', { params });
+      setMessages(response.data.messages);
+    } catch (err) {
+      console.error('Failed to fetch help messages:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await axios.get('/api/help/stats');
+      setStats(response.data);
+    } catch (err) {
+      console.error('Failed to fetch help stats:', err);
+    }
+  };
+
+  const updateStatus = async (id, newStatus) => {
+    setUpdating(true);
+    try {
+      await axios.patch(`/api/help/${id}`, { status: newStatus });
+      fetchMessages();
+      fetchStats();
+      if (selectedMessage?.id === id) {
+        setSelectedMessage(null);
+      }
+    } catch (err) {
+      alert('Failed to update status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const saveAdminNotes = async (id) => {
+    setUpdating(true);
+    try {
+      await axios.patch(`/api/help/${id}`, { adminNotes });
+      fetchMessages();
+      setSelectedMessage(null);
+      setAdminNotes('');
+    } catch (err) {
+      alert('Failed to save notes');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const deleteMessage = async (id) => {
+    if (!confirm('Are you sure you want to delete this help message?')) return;
+    
+    try {
+      await axios.delete(`/api/help/${id}`);
+      fetchMessages();
+      fetchStats();
+      if (selectedMessage?.id === id) {
+        setSelectedMessage(null);
+      }
+    } catch (err) {
+      alert('Failed to delete message');
+    }
+  };
+
+  const openMessage = (message) => {
+    setSelectedMessage(message);
+    setAdminNotes(message.adminNotes || '');
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  return (
+    <div className="help-messages-management">
+      {stats && (
+        <div className="stats-grid" style={{ marginBottom: '24px' }}>
+          <div className="stat-card card">
+            <div className="stat-icon">📬</div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.total}</div>
+              <div className="stat-label">Total Messages</div>
+            </div>
+          </div>
+          <div className="stat-card card warning">
+            <div className="stat-icon">🔴</div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.unread}</div>
+              <div className="stat-label">Unread</div>
+            </div>
+          </div>
+          <div className="stat-card card">
+            <div className="stat-icon">📖</div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.read}</div>
+              <div className="stat-label">Read</div>
+            </div>
+          </div>
+          <div className="stat-card card">
+            <div className="stat-icon">🔄</div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.inProgress}</div>
+              <div className="stat-label">In Progress</div>
+            </div>
+          </div>
+          <div className="stat-card card">
+            <div className="stat-icon">✅</div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.resolved}</div>
+              <div className="stat-label">Resolved</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="section-header" style={{ marginBottom: '20px' }}>
+        <h2>Help Messages</h2>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '150px' }}
+        >
+          <option value="all">All Statuses</option>
+          <option value="UNREAD">Unread</option>
+          <option value="READ">Read</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="RESOLVED">Resolved</option>
+          <option value="ARCHIVED">Archived</option>
+        </select>
+      </div>
+
+      {messages.length === 0 ? (
+        <div className="empty-state">
+          <p>No help messages found.</p>
+        </div>
+      ) : (
+        <div className="messages-list">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`message-card card ${message.status === 'UNREAD' ? 'unread' : ''}`}
+              style={{
+                marginBottom: '16px',
+                padding: '20px',
+                borderLeft: message.status === 'UNREAD' ? '4px solid var(--primary)' : '4px solid var(--border)',
+                cursor: 'pointer',
+              }}
+              onClick={() => openMessage(message)}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                <div>
+                  <h3 style={{ margin: 0, marginBottom: '4px' }}>{message.subject}</h3>
+                  <div style={{ fontSize: '14px', color: 'var(--text-light)' }}>
+                    From: {message.name} ({message.email})
+                    {message.user && <span> • User Account</span>}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span
+                    className={`status-badge status-${message.status.toLowerCase()}`}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      background: message.status === 'UNREAD' ? '#fee2e2' : '#e0e7ff',
+                      color: message.status === 'UNREAD' ? '#991b1b' : '#1e40af',
+                    }}
+                  >
+                    {message.status}
+                  </span>
+                </div>
+              </div>
+              <p style={{ margin: '12px 0', color: 'var(--text)', lineHeight: '1.6' }}>
+                {message.message.length > 200 ? `${message.message.substring(0, 200)}...` : message.message}
+              </p>
+              <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '8px' }}>
+                {new Date(message.createdAt).toLocaleString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {selectedMessage && (
+        <div className="modal-overlay" onClick={() => setSelectedMessage(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0 }}>{selectedMessage.subject}</h2>
+              <button onClick={() => setSelectedMessage(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>×</button>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <strong>From:</strong> {selectedMessage.name} ({selectedMessage.email})
+              {selectedMessage.user && <span> • User Account: {selectedMessage.user.email}</span>}
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <strong>Date:</strong> {new Date(selectedMessage.createdAt).toLocaleString()}
+            </div>
+
+            <div style={{ marginBottom: '20px', padding: '16px', background: 'var(--bg)', borderRadius: '8px' }}>
+              <strong style={{ display: 'block', marginBottom: '8px' }}>Message:</strong>
+              <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{selectedMessage.message}</p>
+            </div>
+
+            {selectedMessage.adminNotes && (
+              <div style={{ marginBottom: '20px', padding: '16px', background: '#fff3cd', borderRadius: '8px' }}>
+                <strong style={{ display: 'block', marginBottom: '8px' }}>Admin Notes:</strong>
+                <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{selectedMessage.adminNotes}</p>
+              </div>
+            )}
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Admin Notes:</label>
+              <textarea
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                className="input"
+                rows={4}
+                placeholder="Add notes or response..."
+                maxLength={5000}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => updateStatus(selectedMessage.id, 'UNREAD')}
+                className="btn btn-outline"
+                disabled={updating || selectedMessage.status === 'UNREAD'}
+                style={{ fontSize: '14px' }}
+              >
+                Mark Unread
+              </button>
+              <button
+                onClick={() => updateStatus(selectedMessage.id, 'READ')}
+                className="btn btn-outline"
+                disabled={updating || selectedMessage.status === 'READ'}
+                style={{ fontSize: '14px' }}
+              >
+                Mark Read
+              </button>
+              <button
+                onClick={() => updateStatus(selectedMessage.id, 'IN_PROGRESS')}
+                className="btn btn-outline"
+                disabled={updating || selectedMessage.status === 'IN_PROGRESS'}
+                style={{ fontSize: '14px' }}
+              >
+                In Progress
+              </button>
+              <button
+                onClick={() => updateStatus(selectedMessage.id, 'RESOLVED')}
+                className="btn btn-primary"
+                disabled={updating || selectedMessage.status === 'RESOLVED'}
+                style={{ fontSize: '14px' }}
+              >
+                Resolve
+              </button>
+              <button
+                onClick={() => updateStatus(selectedMessage.id, 'ARCHIVED')}
+                className="btn btn-outline"
+                disabled={updating || selectedMessage.status === 'ARCHIVED'}
+                style={{ fontSize: '14px' }}
+              >
+                Archive
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => saveAdminNotes(selectedMessage.id)}
+                className="btn btn-primary"
+                disabled={updating}
+                style={{ flex: 1 }}
+              >
+                {updating ? 'Saving...' : 'Save Notes'}
+              </button>
+              <button
+                onClick={() => deleteMessage(selectedMessage.id)}
+                className="btn btn-secondary"
+                disabled={updating}
+                style={{ flex: 1 }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

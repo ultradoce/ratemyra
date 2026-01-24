@@ -19,6 +19,7 @@ import schoolRoutes from './routes/school.js';
 import searchRoutes from './routes/search.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
+import helpRoutes from './routes/help.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -384,6 +385,7 @@ app.use('/api/schools', schoolRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/help', helpRoutes);
 
 // Serve static files from React app in production (before catch-all)
 if (process.env.NODE_ENV === 'production') {
