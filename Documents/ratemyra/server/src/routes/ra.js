@@ -25,6 +25,10 @@ const createRARateLimit = rateLimit({
  */
 router.get('/:id', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const { id } = req.params;
     
     // Try cache first
@@ -97,6 +101,10 @@ router.get('/:id', async (req, res, next) => {
  */
 router.get('/', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const { schoolId, dorm, search } = req.query;
     
     const where = {};

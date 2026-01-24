@@ -10,6 +10,14 @@ const prisma = getPrismaClient();
  */
 router.get('/test', async (req, res) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database not available',
+        message: 'DATABASE_URL is not set. Add PostgreSQL database in Railway.'
+      });
+    }
+
     // Simple test query
     const count = await prisma.school.count();
     const sampleSchools = await prisma.school.findMany({
@@ -208,6 +216,10 @@ router.get('/:id', async (req, res, next) => {
     return next();
   }
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const { id } = req.params;
 
     const school = await prisma.school.findUnique({
@@ -235,6 +247,10 @@ router.get('/:id', async (req, res, next) => {
  */
 router.post('/', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const { name, domain, location } = req.body;
 
     if (!name) {

@@ -12,6 +12,10 @@ const prisma = getPrismaClient();
  */
 router.get('/', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const { q, schoolId, limit = 20 } = req.query;
 
     if (!schoolId) {
