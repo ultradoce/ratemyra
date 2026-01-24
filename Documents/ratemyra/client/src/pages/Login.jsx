@@ -63,6 +63,10 @@ function Login() {
       }
     } else {
       setError(result.error);
+      // If email not verified, show resend option
+      if (result.error?.includes('verify your email') || result.emailVerified === false) {
+        setShowResendVerification(true);
+      }
     }
     setLoading(false);
   };
