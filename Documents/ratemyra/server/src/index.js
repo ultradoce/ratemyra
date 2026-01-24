@@ -91,24 +91,37 @@ app.post('/api/setup', async (req, res) => {
     try {
       console.log('🔄 Running database migrations...');
       const serverDir = path.join(__dirname, '..');
+      console.log('   Working directory:', serverDir);
+      console.log('   DATABASE_URL set:', !!process.env.DATABASE_URL);
+      
       const migrationOutput = execSync('npx prisma migrate deploy', { 
         cwd: serverDir,
         encoding: 'utf8',
         stdio: 'pipe',
         env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
       });
+      
       console.log('✅ Migrations completed');
-      console.log('Migration output:', migrationOutput.substring(0, 500));
+      const outputPreview = migrationOutput.substring(0, 1000);
+      console.log('Migration output:', outputPreview);
+      
       results.migrations.success = true;
       results.migrations.message = 'Migrations completed successfully';
+      results.migrations.output = outputPreview;
     } catch (migrationError) {
       console.error('❌ Migration error:', migrationError.message);
+      console.error('   Error code:', migrationError.status);
+      console.error('   Stderr:', migrationError.stderr?.toString().substring(0, 500));
+      console.error('   Stdout:', migrationError.stdout?.toString().substring(0, 500));
+      
       // Check if error is because migrations are already applied
-      if (migrationError.message.includes('already applied') || migrationError.message.includes('No pending migrations')) {
+      const errorMsg = migrationError.message || migrationError.stderr?.toString() || '';
+      if (errorMsg.includes('already applied') || errorMsg.includes('No pending migrations') || errorMsg.includes('already in the database')) {
         results.migrations.success = true;
         results.migrations.message = 'Migrations already applied';
       } else {
-        results.migrations.message = migrationError.message;
+        results.migrations.message = migrationError.message || 'Migration failed';
+        results.migrations.error = errorMsg.substring(0, 500);
       }
     }
 
@@ -300,6 +313,10 @@ async function ensureDefaultAdmin() {
       console.error('⚠️  Authentication failed. Check DATABASE_URL credentials.');
     } else if (error.code === 'P1017') {
       console.error('⚠️  Server closed connection. Database may be restarting.');
+    } else if (error.code === 'P2021') {
+      console.error('⚠️  Database tables do not exist. Migrations need to be run.');
+      console.error('   Visit /api/setup to run migrations and create tables.');
+      console.error('   Or run: npx prisma migrate deploy');
     } else {
       console.error('⚠️  Error creating default admin:', error.message);
       if (error.stack) {
