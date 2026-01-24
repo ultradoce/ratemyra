@@ -10,7 +10,8 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:seed:schools": "node scripts/seed-schools.js",
     "db:studio": "prisma studio",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "cleanup-tags": "node scripts/cleanup-removed-tags.js"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",

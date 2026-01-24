@@ -434,6 +434,101 @@ router.post('/seed-schools', async (req, res, next) => {
 });
 
 /**
+ * POST /api/admin/cleanup-tags
+ * Clean up removed tags from reviews and tag statistics
+ */
+router.post('/cleanup-tags', async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const REMOVED_TAGS = [
+      'TOUGH_GRADER',
+      'PARTICIPATION_MATTERS',
+      'GROUP_WORK',
+      'INDEPENDENT_WORK',
+    ];
+
+    console.log('🧹 Starting tag cleanup...');
+    console.log('Removing tags:', REMOVED_TAGS.join(', '));
+
+    // Get all reviews that have any of the removed tags
+    const reviewsToUpdate = await prisma.review.findMany({
+      where: {
+        tags: {
+          hasSome: REMOVED_TAGS,
+        },
+      },
+      select: {
+        id: true,
+        tags: true,
+        raId: true,
+      },
+    });
+
+    console.log(`Found ${reviewsToUpdate.length} reviews with removed tags`);
+
+    let updatedCount = 0;
+    let totalTagsRemoved = 0;
+
+    // Update each review to remove the invalid tags
+    for (const review of reviewsToUpdate) {
+      const originalTags = [...review.tags];
+      const cleanedTags = review.tags.filter(tag => !REMOVED_TAGS.includes(tag));
+      
+      if (cleanedTags.length !== originalTags.length) {
+        const removedCount = originalTags.length - cleanedTags.length;
+        totalTagsRemoved += removedCount;
+
+        await prisma.review.update({
+          where: { id: review.id },
+          data: { tags: cleanedTags },
+        });
+
+        // Invalidate cache for this RA
+        await deleteCache(cacheKeys.ra(review.raId));
+        await deleteCache(cacheKeys.raReviews(review.raId));
+
+        updatedCount++;
+      }
+    }
+
+    console.log(`✅ Updated ${updatedCount} reviews`);
+    console.log(`✅ Removed ${totalTagsRemoved} invalid tag instances`);
+
+    // Delete tag statistics for removed tags
+    console.log('🧹 Cleaning up tag statistics...');
+    
+    let deletedStatsCount = 0;
+    for (const tag of REMOVED_TAGS) {
+      const result = await prisma.rATagStat.deleteMany({
+        where: { tag },
+      });
+      deletedStatsCount += result.count;
+      if (result.count > 0) {
+        console.log(`  Deleted ${result.count} tag stats for ${tag}`);
+      }
+    }
+
+    console.log(`✅ Deleted ${deletedStatsCount} tag statistics entries`);
+
+    res.json({
+      success: true,
+      message: 'Tag cleanup completed successfully',
+      summary: {
+        reviewsUpdated: updatedCount,
+        tagsRemoved: totalTagsRemoved,
+        tagStatsDeleted: deletedStatsCount,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Error during tag cleanup:', error);
+    next(error);
+  }
+});
+
+/**
  * POST /api/admin/help-request
  * Submit a help request from admin dashboard
  */
