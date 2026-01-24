@@ -158,7 +158,7 @@ function SubmitReview() {
       setSuccess(true);
       setTimeout(() => {
         navigate(`/ra/${id}`);
-      }, 2000);
+      }, 2500);
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.response?.data?.errors?.[0]?.msg || 'Failed to submit review. Please try again.';
       setError(errorMsg);
@@ -174,9 +174,25 @@ function SubmitReview() {
   if (success) {
     return (
       <div className="container">
-        <div className="card success-message">
-          <h2>Review submitted successfully!</h2>
-          <p>Redirecting to RA profile...</p>
+        <div className="success-animation-container">
+          <div className="success-checkmark">
+            <div className="checkmark-circle">
+              <div className="checkmark-stem"></div>
+              <div className="checkmark-kick"></div>
+            </div>
+          </div>
+          <h2 className="success-title">Review Submitted Successfully!</h2>
+          <p className="success-message-text">Thank you for sharing your experience!</p>
+          <p className="success-redirect">Redirecting to RA profile...</p>
+          <div className="confetti-container">
+            {[...Array(50)].map((_, i) => (
+              <div key={i} className="confetti" style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 0.5}s`,
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][Math.floor(Math.random() * 5)]
+              }}></div>
+            ))}
+          </div>
         </div>
       </div>
     );

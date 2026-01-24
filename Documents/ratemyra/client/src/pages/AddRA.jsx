@@ -12,6 +12,8 @@ function AddRA() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [potentialDuplicates, setPotentialDuplicates] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [successRAId, setSuccessRAId] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -51,8 +53,12 @@ function AddRA() {
     try {
       const response = await axios.post('/api/ras', formData);
       
-      // Success - redirect to the new RA's page
-      navigate(`/ra/${response.data.id}`);
+      // Success - show animation then redirect
+      setSuccess(true);
+      setSuccessRAId(response.data.id);
+      setTimeout(() => {
+        navigate(`/ra/${response.data.id}`);
+      }, 2500);
     } catch (err) {
       if (err.response?.status === 409) {
         const data = err.response.data;
@@ -105,6 +111,33 @@ function AddRA() {
   const handleSelectDuplicate = (duplicateId) => {
     navigate(`/ra/${duplicateId}`);
   };
+
+  if (success) {
+    return (
+      <div className="container">
+        <div className="success-animation-container">
+          <div className="success-checkmark">
+            <div className="checkmark-circle">
+              <div className="checkmark-stem"></div>
+              <div className="checkmark-kick"></div>
+            </div>
+          </div>
+          <h2 className="success-title">RA Added Successfully!</h2>
+          <p className="success-message-text">Thank you for contributing to the community!</p>
+          <p className="success-redirect">Redirecting to RA profile...</p>
+          <div className="confetti-container">
+            {[...Array(50)].map((_, i) => (
+              <div key={i} className="confetti" style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 0.5}s`,
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][Math.floor(Math.random() * 5)]
+              }}></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="add-ra">
