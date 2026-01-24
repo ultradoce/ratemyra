@@ -69,29 +69,36 @@ function Home() {
           </div>
         </div>
 
-        <div className="join-section">
-          <h2>Join the RateMyRA Family</h2>
-          <p className="join-subtitle">Love RateMyRA? Let's make it official.</p>
+        <div className="cta-section">
+          <h2>Your Voice Matters</h2>
+          <p className="cta-subtitle">
+            Share your honest experience and help future students know what to expect. 
+            Every review makes a difference.
+          </p>
           
-          <div className="benefits-grid">
-            <div className="benefit-card">
-              <div className="benefit-icon">✏️</div>
-              <h3>Manage and edit your ratings</h3>
+          <div className="cta-reasons">
+            <div className="reason-item">
+              <div className="reason-icon">💬</div>
+              <h3>Help Others</h3>
+              <p>Your feedback helps students understand what to expect from their RA</p>
             </div>
-            <div className="benefit-card">
-              <div className="benefit-icon">🔒</div>
-              <h3>Your ratings are always anonymous</h3>
+            <div className="reason-item">
+              <div className="reason-icon">🎯</div>
+              <h3>Be Honest</h3>
+              <p>Share your real experience - the good, the bad, and everything in between</p>
             </div>
-            <div className="benefit-card">
-              <div className="benefit-icon">👍</div>
-              <h3>Like or dislike ratings</h3>
+            <div className="reason-item">
+              <div className="reason-icon">🔒</div>
+              <h3>Stay Anonymous</h3>
+              <p>All reviews are completely anonymous - share freely without worry</p>
             </div>
           </div>
           
-          <div className="join-cta">
+          <div className="cta-actions">
             <Link to="/add-ra" className="btn btn-primary btn-large">
-              Get Started
+              Add Your RA & Leave a Review
             </Link>
+            <p className="cta-note">No account needed - start reviewing in seconds</p>
           </div>
         </div>
       </div>
