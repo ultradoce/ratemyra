@@ -22,7 +22,20 @@ import { errorHandler } from './middleware/errorHandler.js';
 dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient();
+
+// Initialize Prisma client only if DATABASE_URL is set
+let prisma = null;
+if (process.env.DATABASE_URL) {
+  try {
+    prisma = new PrismaClient();
+  } catch (error) {
+    console.warn('⚠️  Failed to initialize Prisma client:', error.message);
+  }
+} else {
+  console.warn('⚠️  DATABASE_URL not set. Database features will be disabled.');
+  console.warn('   Add PostgreSQL database in Railway to enable database features.');
+}
+
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -113,9 +126,9 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Create default admin account if it doesn't exist
 async function ensureDefaultAdmin() {
-  // Check if DATABASE_URL is set
-  if (!process.env.DATABASE_URL) {
-    console.log('⚠️  DATABASE_URL not set. Skipping admin account creation.');
+  // Check if Prisma client is available
+  if (!prisma) {
+    console.log('⚠️  Database not available. Skipping admin account creation.');
     console.log('   Add PostgreSQL database in Railway to enable admin account.');
     return;
   }
@@ -207,7 +220,9 @@ process.on('uncaughtException', (error) => {
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  await prisma.$disconnect();
+  if (prisma) {
+    await prisma.$disconnect();
+  }
   process.exit(0);
 });
 
