@@ -432,9 +432,10 @@ router.post('/:id/like', async (req, res, next) => {
     // Get IP and device fingerprint for anonymous users
     const clientIP = getClientIP(req);
     const ipHash = hashIP(clientIP);
+    // hashDeviceFingerprint expects (req, body) where body contains fingerprint data
     const deviceFingerprintHash = req.body.deviceFingerprint 
-      ? hashDeviceFingerprint(req.body.deviceFingerprint, req)
-      : null;
+      ? hashDeviceFingerprint(req, req.body)
+      : hashDeviceFingerprint(req, {}); // Fallback to headers-only fingerprint
 
     // Check if user already voted on this review
     const existingLike = await prisma.reviewLike.findFirst({
