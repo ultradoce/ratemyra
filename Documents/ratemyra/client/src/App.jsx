@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import RASearch from './pages/RASearch';
 import RADetail from './pages/RADetail';
@@ -27,6 +28,7 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </main>
+        <Footer />
       </div>
     </AuthProvider>
   );
