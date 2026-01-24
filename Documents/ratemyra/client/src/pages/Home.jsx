@@ -38,7 +38,6 @@ function Home() {
           
           <div className="search-flow">
             <div className="school-selection">
-              <label className="search-label">Enter your <strong>school</strong> to get started</label>
               <SchoolSearch
                 onSelectSchool={handleSchoolSelect}
                 selectedSchool={selectedSchool}
