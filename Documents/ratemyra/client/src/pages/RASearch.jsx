@@ -120,11 +120,16 @@ function RASearch() {
         
         <div className="search-flow">
           <div className="school-selection">
-            <label className="search-label">Select School</label>
+            {!selectedSchool && (
+              <label className="search-label">Select School (optional)</label>
+            )}
             <SchoolSearch
               onSelectSchool={handleSchoolSelect}
               selectedSchool={selectedSchool}
-              placeholder="Enter your school to get started"
+              placeholder={selectedSchool 
+                ? selectedSchool.name 
+                : "Enter your school to filter results (optional)"
+              }
             />
           </div>
 
