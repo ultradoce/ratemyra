@@ -35,6 +35,8 @@ router.get('/', async (req, res, next) => {
   try {
     const { q, limit } = req.query;
     
+    console.log('GET /api/schools - Query params:', { q, limit });
+    
     // Handle case where Prisma might not be initialized or database not connected
     if (!prisma) {
       console.error('Prisma client not initialized');
@@ -44,11 +46,14 @@ router.get('/', async (req, res, next) => {
     const searchTerm = q ? q.trim() : '';
     const resultLimit = limit ? parseInt(limit, 10) : (searchTerm ? 20 : 50);
     
+    console.log('Search params:', { searchTerm, resultLimit });
+    
     let schools = [];
     
     try {
       if (searchTerm) {
         // Search by name or location
+        console.log('Searching schools with term:', searchTerm);
         schools = await prisma.school.findMany({
           where: {
             OR: [
@@ -65,8 +70,10 @@ router.get('/', async (req, res, next) => {
             domain: true,
           },
         });
+        console.log(`Found ${schools.length} schools matching "${searchTerm}"`);
       } else {
         // No search term, show popular schools (ordered by name for now)
+        console.log('Fetching all schools (limit:', resultLimit, ')');
         schools = await prisma.school.findMany({
           orderBy: { name: 'asc' },
           take: resultLimit,
@@ -77,6 +84,7 @@ router.get('/', async (req, res, next) => {
             domain: true,
           },
         });
+        console.log(`Found ${schools.length} schools total`);
       }
       
       // Try to get RA counts, but don't fail if it doesn't work
@@ -88,13 +96,15 @@ router.get('/', async (req, res, next) => {
                 where: { schoolId: school.id }
               });
               return { ...school, _count: { ras: count } };
-            } catch {
+            } catch (err) {
+              console.warn(`Failed to count RAs for school ${school.id}:`, err.message);
               return { ...school, _count: { ras: 0 } };
             }
           })
         );
         schools = schoolsWithCounts;
-      } catch {
+      } catch (err) {
+        console.warn('Failed to get RA counts, using defaults:', err.message);
         // If counting fails, just set to 0
         schools = schools.map(school => ({ ...school, _count: { ras: 0 } }));
       }
@@ -103,6 +113,7 @@ router.get('/', async (req, res, next) => {
       console.error('School query error:', queryError);
       console.error('Error code:', queryError.code);
       console.error('Error message:', queryError.message);
+      console.error('Error stack:', queryError.stack);
       
       // Return empty array instead of crashing
       if (queryError.code === 'P1001' || queryError.code === 'P1012') {
@@ -117,6 +128,7 @@ router.get('/', async (req, res, next) => {
       return res.json([]);
     }
 
+    console.log(`Returning ${schools.length} schools`);
     // Always return an array, even if empty
     res.json(schools || []);
   } catch (error) {

@@ -3,11 +3,13 @@ import axios from 'axios';
 import './SchoolSearch.css';
 
 // Use configured API instance if available, otherwise use axios directly
+// In production, the server serves the frontend, so relative URLs work
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '',
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter your school to get started" }) {
@@ -58,25 +60,40 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
         return;
       }
 
+      console.log('Fetching schools from:', url);
       const response = await api.get(url);
+      console.log('Schools response:', response);
+      console.log('Response data:', response.data);
+      
       const schoolsData = Array.isArray(response.data) ? response.data : [];
+      console.log('Parsed schools data:', schoolsData);
+      console.log('Number of schools:', schoolsData.length);
+      
       setSchools(schoolsData);
-      setShowDropdown(true);
+      if (schoolsData.length > 0) {
+        setShowDropdown(true);
+      } else {
+        setShowDropdown(false);
+      }
     } catch (err) {
       console.error('School search error:', err);
+      console.error('Error response:', err.response);
       console.error('Error details:', err.response?.data || err.message);
+      console.error('Error status:', err.response?.status);
+      console.error('Error code:', err.code);
       
       // More specific error messages
       if (err.response?.status === 404) {
         setError('Schools endpoint not found. Please check if the server is running.');
       } else if (err.response?.status >= 500) {
-        setError('Server error. Please try again later.');
+        setError(`Server error (${err.response?.status}). Please try again later.`);
       } else if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error')) {
         setError('Network error. Please check your connection.');
       } else {
-        setError('Failed to search schools. Please try again.');
+        setError(`Failed to search schools: ${err.response?.data?.error || err.message}`);
       }
       setSchools([]);
+      setShowDropdown(false);
     } finally {
       setLoading(false);
     }
