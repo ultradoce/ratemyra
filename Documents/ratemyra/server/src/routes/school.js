@@ -78,13 +78,13 @@ router.get('/', async (req, res, next) => {
     
     try {
       if (searchTerm) {
-        // Search by name or location
+        // Search by name or location (case-insensitive)
         console.log('Searching schools with term:', searchTerm);
         schools = await prisma.school.findMany({
           where: {
             OR: [
-              { name: { contains: searchTerm } },
-              { location: { contains: searchTerm } }
+              { name: { contains: searchTerm, mode: 'insensitive' } },
+              { location: { contains: searchTerm, mode: 'insensitive' } }
             ]
           },
           orderBy: { name: 'asc' },
@@ -183,13 +183,16 @@ router.get('/', async (req, res, next) => {
       return res.status(409).json({ error: 'Duplicate entry' });
     }
     
-    // If it's a query error, try without case-insensitive mode
-    if (q && prisma && error.message && error.message.includes('insensitive')) {
+    // If it's a query error, try a simpler search
+    if (q && prisma) {
       try {
-        console.log('Retrying search without case-insensitive mode...');
+        console.log('Retrying search with simpler query...');
         const schools = await prisma.school.findMany({
           where: {
-            name: { contains: q.trim() }
+            OR: [
+              { name: { contains: q.trim(), mode: 'insensitive' } },
+              { location: { contains: q.trim(), mode: 'insensitive' } }
+            ]
           },
           orderBy: { name: 'asc' },
           select: {
