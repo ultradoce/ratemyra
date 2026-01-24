@@ -81,43 +81,87 @@ function RADetail() {
   return (
     <div className="ra-detail">
       <div className="container">
-        <div className="ra-header card">
-          <h1>{ra.firstName} {ra.lastName}</h1>
-          <div className="ra-info">
-            <p><strong>School:</strong> {ra.school?.name || 'N/A'}</p>
-            {ra.dorm && <p><strong>Dorm:</strong> {ra.dorm}</p>}
-            {ra.floor && <p><strong>Floor:</strong> {ra.floor}</p>}
-          </div>
-          
-          <div className="ra-stats">
-            <div className="stat stat-primary">
-              <div className="stat-value-large">{ra.rating ? ra.rating.toFixed(1) : 'N/A'}</div>
-              <div className="stat-label">Overall Quality</div>
-              {ra.rating && <StarRating rating={ra.rating} size="large" />}
-            </div>
-            {ra.wouldTakeAgainPercentage !== null && ra.wouldTakeAgainPercentage !== undefined && (
-              <div className="stat stat-highlight">
-                <div className="stat-value-large">{ra.wouldTakeAgainPercentage}%</div>
-                <div className="stat-label">Would Take Again</div>
-                <div className="stat-subtext">Based on {ra.totalReviews} {ra.totalReviews === 1 ? 'review' : 'reviews'}</div>
+        {/* Hero Section */}
+        <div className="ra-hero">
+          <div className="ra-hero-content">
+            <div className="ra-name-section">
+              <h1 className="ra-name">{ra.firstName} {ra.lastName}</h1>
+              <div className="ra-location">
+                <span className="location-icon">🏫</span>
+                <span>{ra.school?.name || 'N/A'}</span>
+                {ra.dorm && (
+                  <>
+                    <span className="location-separator">•</span>
+                    <span>{ra.dorm}</span>
+                  </>
+                )}
+                {ra.floor && (
+                  <>
+                    <span className="location-separator">•</span>
+                    <span>Floor {ra.floor}</span>
+                  </>
+                )}
               </div>
-            )}
-            {ra.averageDifficulty && (
-              <div className="stat">
-                <div className="stat-value">{ra.averageDifficulty.toFixed(1)}</div>
-                <div className="stat-label">Level of Difficulty</div>
-                <div className="stat-subtext">1.0 is easiest, 5.0 is hardest</div>
-              </div>
-            )}
-            <div className="stat">
-              <div className="stat-value">{ra.totalReviews}</div>
-              <div className="stat-label">Total Ratings</div>
+            </div>
+            
+            <div className="ra-main-rating">
+              {ra.rating ? (
+                <>
+                  <div className="main-rating-value">{ra.rating.toFixed(1)}</div>
+                  <div className="main-rating-stars">
+                    <StarRating rating={ra.rating} size="large" />
+                  </div>
+                  <div className="main-rating-label">Overall Quality</div>
+                  <div className="main-rating-count">
+                    Based on {ra.totalReviews} {ra.totalReviews === 1 ? 'student review' : 'student reviews'}
+                  </div>
+                </>
+              ) : (
+                <div className="no-rating">
+                  <div className="no-rating-icon">⭐</div>
+                  <div className="no-rating-text">No ratings yet</div>
+                  <div className="no-rating-subtext">Be the first to rate this RA!</div>
+                </div>
+              )}
             </div>
           </div>
+        </div>
 
-          {ra.ratingDistribution && (
-            <div className="rating-distribution">
-              <h3>Rating Distribution</h3>
+        {/* Key Metrics */}
+        <div className="ra-metrics-grid">
+          {ra.wouldTakeAgainPercentage !== null && ra.wouldTakeAgainPercentage !== undefined && (
+            <div className="metric-card metric-green">
+              <div className="metric-icon">👍</div>
+              <div className="metric-content">
+                <div className="metric-value">{ra.wouldTakeAgainPercentage}%</div>
+                <div className="metric-label">Would Take Again</div>
+              </div>
+            </div>
+          )}
+          {ra.averageDifficulty && (
+            <div className="metric-card metric-blue">
+              <div className="metric-icon">📊</div>
+              <div className="metric-content">
+                <div className="metric-value">{ra.averageDifficulty.toFixed(1)}</div>
+                <div className="metric-label">Difficulty Level</div>
+                <div className="metric-subtext">1.0 = Easy, 5.0 = Hard</div>
+              </div>
+            </div>
+          )}
+          <div className="metric-card metric-purple">
+            <div className="metric-icon">📝</div>
+            <div className="metric-content">
+              <div className="metric-value">{ra.totalReviews}</div>
+              <div className="metric-label">Total Reviews</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Rating Distribution & Tags Section */}
+        <div className="ra-details-section">
+          {ra.ratingDistribution && ra.totalReviews > 0 && (
+            <div className="details-card card">
+              <h3 className="details-card-title">Rating Distribution</h3>
               <div className="distribution-bars">
                 {[5, 4, 3, 2, 1].map(rating => {
                   const count = ra.ratingDistribution[rating] || 0;
@@ -142,27 +186,39 @@ function RADetail() {
           )}
 
           {ra.tagStats && ra.tagStats.length > 0 && (
-            <div className="tags">
-              <h3>Tags</h3>
+            <div className="details-card card">
+              <h3 className="details-card-title">Student Tags</h3>
               <div className="tag-list">
-                {ra.tagStats.map((tagStat, idx) => (
-                  <span key={idx} className="tag">
-                    {tagStat.tag.replace(/_/g, ' ')} ({tagStat.count})
-                  </span>
-                ))}
+                {ra.tagStats
+                  .sort((a, b) => b.count - a.count)
+                  .map((tagStat, idx) => (
+                    <span key={idx} className="tag-badge">
+                      <span className="tag-name">{tagStat.tag.replace(/_/g, ' ')}</span>
+                      <span className="tag-count">{tagStat.count}</span>
+                    </span>
+                  ))}
               </div>
             </div>
           )}
 
-          <div className="ra-actions">
-            <Link to={`/ra/${id}/review`} className="btn btn-primary">
-              Write a Review
-            </Link>
+          <div className="action-card card">
+            <div className="action-content">
+              <h3>Share Your Experience</h3>
+              <p>Help other students by writing a review for this RA</p>
+              <Link to={`/ra/${id}/review`} className="btn btn-primary btn-large">
+                Write a Review
+              </Link>
+            </div>
           </div>
         </div>
 
+        {/* Reviews Section */}
         <div className="reviews-section">
-          <h2>Reviews ({ra.totalReviews})</h2>
+          <div className="reviews-header">
+            <h2>Student Reviews</h2>
+            <div className="reviews-count">{ra.totalReviews} {ra.totalReviews === 1 ? 'Review' : 'Reviews'}</div>
+          </div>
+          
           {reviews.length === 0 && !reviewsLoading ? (
             <EmptyState
               icon="📝"
@@ -178,42 +234,63 @@ function RADetail() {
             <>
               {reviews.map((review) => (
                 <div key={review.id} className="review-card card fade-in">
-                  <div className="review-header">
-                    <div className="review-ratings">
-                      <div className="rating-item">
-                        <span className="rating-label">Clarity:</span>
-                        <StarRating rating={review.ratingClarity} size="small" />
-                        <span className="rating-value">{review.ratingClarity}/5</span>
+                  <div className="review-card-header">
+                    <div className="review-meta-left">
+                      <div className="review-date">
+                        {new Date(review.timestamp).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
                       </div>
-                      <div className="rating-item">
-                        <span className="rating-label">Helpfulness:</span>
-                        <StarRating rating={review.ratingHelpfulness} size="small" />
-                        <span className="rating-value">{review.ratingHelpfulness}/5</span>
-                      </div>
-                      <div className="rating-item">
-                        <span className="rating-label">Difficulty:</span>
-                        <span className="difficulty-value">{review.difficulty}/5</span>
-                      </div>
+                      {review.tags && review.tags.length > 0 && (
+                        <div className="review-tags-inline">
+                          {review.tags.slice(0, 3).map((tag, idx) => (
+                            <span key={idx} className="tag-mini">
+                              {tag.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="review-date">
-                      {new Date(review.timestamp).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                    <div className="review-meta-right">
+                      {review.wouldTakeAgain !== null && (
+                        <div className={`would-take-badge ${review.wouldTakeAgain ? 'yes' : 'no'}`}>
+                          {review.wouldTakeAgain ? '✓ Would Take Again' : '✗ Would Not Take Again'}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {review.tags && review.tags.length > 0 && (
-                    <div className="review-tags">
-                      {review.tags.map((tag, idx) => (
-                        <span key={idx} className="tag-small">
-                          {tag.replace(/_/g, ' ')}
-                        </span>
-                      ))}
+
+                  <div className="review-ratings-grid">
+                    <div className="review-rating-item">
+                      <div className="review-rating-label">Clarity</div>
+                      <div className="review-rating-display">
+                        <StarRating rating={review.ratingClarity} size="small" />
+                        <span className="review-rating-number">{review.ratingClarity}/5</span>
+                      </div>
                     </div>
-                  )}
+                    <div className="review-rating-item">
+                      <div className="review-rating-label">Helpfulness</div>
+                      <div className="review-rating-display">
+                        <StarRating rating={review.ratingHelpfulness} size="small" />
+                        <span className="review-rating-number">{review.ratingHelpfulness}/5</span>
+                      </div>
+                    </div>
+                    <div className="review-rating-item">
+                      <div className="review-rating-label">Difficulty</div>
+                      <div className="review-rating-display">
+                        <div className={`difficulty-badge difficulty-${review.difficulty}`}>
+                          {review.difficulty}/5
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {review.textBody && (
-                    <p className="review-text">{review.textBody}</p>
+                    <div className="review-text-content">
+                      <p>{review.textBody}</p>
+                    </div>
                   )}
                 </div>
               ))}
