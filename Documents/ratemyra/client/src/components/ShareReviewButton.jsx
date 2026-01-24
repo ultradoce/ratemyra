@@ -275,7 +275,7 @@ function ShareReviewButton({ review, ra }) {
         </div>
       `;
 
-      // Create the card element directly instead of using innerHTML
+      // Create the card element directly
       const cardDiv = document.createElement('div');
       cardDiv.style.cssText = `
         background: #ffffff;
@@ -288,7 +288,10 @@ function ShareReviewButton({ review, ra }) {
         color: #333333;
         line-height: 1.6;
       `;
-      cardDiv.innerHTML = cardHTML.replace(/^\s*<div[^>]*>/, '').replace(/<\/div>\s*$/, '');
+      // Remove the outer div wrapper from cardHTML
+      const innerHTML = cardHTML.trim();
+      const match = innerHTML.match(/^<div[^>]*>(.*)<\/div>$/s);
+      cardDiv.innerHTML = match ? match[1] : innerHTML;
       
       tempContainer.style.cssText = `
         position: fixed;
