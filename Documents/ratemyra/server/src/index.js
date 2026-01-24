@@ -387,68 +387,65 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/help', helpRoutes);
 
-// Serve static files from React app in production (before catch-all)
-if (process.env.NODE_ENV === 'production') {
-  // Path resolution: __dirname is /app/server/src
-  // We need to go up to /app, then into client/dist
-  // So: ../../client/dist from server/src
-  const clientPath = path.join(__dirname, '../../client/dist');
-  const absolutePath = path.resolve(clientPath);
+// Serve static files from React app (check both production and Railway environment)
+// Railway may not always set NODE_ENV=production, so also check for dist folder existence
+const clientPath = path.join(__dirname, '../../client/dist');
+const absolutePath = path.resolve(clientPath);
+
+console.log(`🔍 Looking for client dist at: ${absolutePath}`);
+console.log(`   __dirname: ${__dirname}`);
+console.log(`   Current working directory: ${process.cwd()}`);
+console.log(`   Resolved path: ${absolutePath}`);
+console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+
+if (fs.existsSync(clientPath)) {
+  console.log(`✅ Found client dist! Serving from: ${absolutePath}`);
+  app.use(express.static(clientPath, { 
+    index: false, // Don't serve index.html for static files
+    extensions: ['html', 'js', 'css', 'json', 'png', 'jpg', 'svg']
+  }));
   
-  console.log(`🔍 Looking for client dist at: ${absolutePath}`);
-  console.log(`   __dirname: ${__dirname}`);
-  console.log(`   Current working directory: ${process.cwd()}`);
-  console.log(`   Resolved path: ${absolutePath}`);
+  // Serve React app for all non-API routes (SPA routing)
+  // This must come AFTER all API routes but BEFORE error handler
+  app.get('*', (req, res, next) => {
+    // Skip API routes - let them fall through to 404 handler
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    // Skip static file requests (they're handled by express.static above)
+    if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|webp)$/)) {
+      return next();
+    }
+    const indexPath = path.join(clientPath, 'index.html');
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('Error serving index.html:', err);
+        console.error('   Path attempted:', indexPath);
+        res.status(404).send('Frontend not found');
+      }
+    });
+  });
+} else {
+  console.warn(`⚠️  Client dist NOT found at: ${absolutePath}`);
+  console.warn('   Expected path:', absolutePath);
+  console.warn('   Make sure frontend is built during deployment');
   
-  if (fs.existsSync(clientPath)) {
-    console.log(`✅ Found client dist! Serving from: ${absolutePath}`);
-    app.use(express.static(clientPath, { 
-      index: false, // Don't serve index.html for static files
-      extensions: ['html', 'js', 'css', 'json', 'png', 'jpg', 'svg']
-    }));
-    
-    // Serve React app for all non-API routes (SPA routing)
-    // This must come AFTER all API routes but BEFORE error handler
-    app.get('*', (req, res, next) => {
-      // Skip API routes - let them fall through to 404 handler
-      if (req.path.startsWith('/api')) {
-        return next();
-      }
-      // Skip static file requests (they're handled by express.static above)
-      if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
-        return next();
-      }
-      const indexPath = path.join(clientPath, 'index.html');
-      res.sendFile(indexPath, (err) => {
-        if (err) {
-          console.error('Error serving index.html:', err);
-          console.error('   Path attempted:', indexPath);
-          res.status(404).send('Frontend not found');
-        }
-      });
-    });
-  } else {
-    console.warn(`⚠️  Client dist NOT found at: ${absolutePath}`);
-    console.warn('   Expected path:', absolutePath);
-    console.warn('   Make sure frontend is built during deployment');
-    
-    // Fallback: serve a simple message for root
-    app.get('/', (req, res) => {
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-          <head><title>RateMyRA - Backend Running</title></head>
-          <body style="font-family: Arial; padding: 40px; text-align: center;">
-            <h1>RateMyRA Backend Running ✅</h1>
-            <p>Frontend not built. Check Railway build logs.</p>
-            <p>API is available at: <a href="/api/health">/api/health</a></p>
-            <p>Expected dist path: ${absolutePath}</p>
-            <p>Current dir: ${process.cwd()}</p>
-          </body>
-        </html>
-      `);
-    });
-  }
+  // Fallback: serve a simple message for root
+  app.get('/', (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>RateMyRA - Backend Running</title></head>
+        <body style="font-family: Arial; padding: 40px; text-align: center;">
+          <h1>RateMyRA Backend Running ✅</h1>
+          <p>Frontend not built. Check Railway build logs.</p>
+          <p>API is available at: <a href="/api/health">/api/health</a></p>
+          <p>Expected dist path: ${absolutePath}</p>
+          <p>Current dir: ${process.cwd()}</p>
+        </body>
+      </html>
+    `);
+  });
 }
 
 // 404 handler for API routes
