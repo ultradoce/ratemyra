@@ -46,7 +46,8 @@ function RASearchAutocomplete({ schoolId, selectedRA, onSelectRA, placeholder = 
       return;
     }
 
-    if (!term || term.trim().length === 0) {
+    // Allow searches with at least 1 character
+    if (!term || term.trim().length < 1) {
       setRAs([]);
       setShowDropdown(false);
       return;

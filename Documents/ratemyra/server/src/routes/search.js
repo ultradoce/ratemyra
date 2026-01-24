@@ -22,11 +22,16 @@ router.get('/', async (req, res, next) => {
       return res.status(400).json({ error: 'School ID is required' });
     }
 
-    if (!q || q.trim().length === 0) {
-      return res.status(400).json({ error: 'Search query is required' });
+    // Allow empty queries - just return empty results
+    const searchTerm = q ? q.trim() : '';
+    
+    if (searchTerm.length === 0) {
+      return res.json({
+        query: '',
+        results: [],
+        total: 0,
+      });
     }
-
-    const searchTerm = q.trim();
     
     // Try cache
     const cacheKey = cacheKeys.search(searchTerm, schoolId);
