@@ -111,7 +111,21 @@ const setupHandler = async (req, res) => {
           stdio: 'pipe',
           env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
         });
-        console.log('✅ Migrations completed');
+        
+        // Check if output indicates no migrations exist
+        const outputStr = migrationOutput.toString();
+        if (outputStr.includes('No migration found') || outputStr.includes('No pending migrations')) {
+          console.log('⚠️  No migrations found, using db push to sync schema...');
+          migrationOutput = execSync('npx prisma db push --accept-data-loss', { 
+            cwd: serverDir,
+            encoding: 'utf8',
+            stdio: 'pipe',
+            env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+          });
+          console.log('✅ Schema synced with db push');
+        } else {
+          console.log('✅ Migrations completed');
+        }
       } catch (deployError) {
         const errorMsg = deployError.stderr?.toString() || deployError.message || '';
         // If no migrations exist, use db push to sync schema
