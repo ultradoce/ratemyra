@@ -294,6 +294,8 @@ function AdminDashboard() {
         <div className="admin-content">
           {activeTab === 'overview' && (
             <div className="overview-section">
+              <RemoveFakeDataSection onSuccess={fetchDashboard} />
+              
               <div className="section-card card">
                 <h2>Recent Reviews</h2>
                 <div className="recent-list">
@@ -365,6 +367,99 @@ function AdminDashboard() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function RemoveFakeDataSection({ onSuccess }) {
+  const [fakeDataStats, setFakeDataStats] = useState(null);
+  const [removing, setRemoving] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  useEffect(() => {
+    fetchFakeDataStats();
+  }, []);
+
+  const fetchFakeDataStats = async () => {
+    try {
+      const response = await axios.get('/api/admin/fake-data-stats');
+      setFakeDataStats(response.data);
+    } catch (err) {
+      console.error('Failed to fetch fake data stats:', err);
+    }
+  };
+
+  const handleRemoveFakeData = async () => {
+    if (!window.confirm('⚠️ WARNING: This will permanently delete all fake data (RAs and reviews with invisible markers). This action cannot be undone. Are you sure?')) {
+      return;
+    }
+
+    if (!window.confirm('Are you absolutely certain? This will delete all fake test data.')) {
+      return;
+    }
+
+    setRemoving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await axios.post('/api/admin/remove-fake-data');
+      setSuccess(response.data.summary);
+      setFakeDataStats({ fakeRAs: 0, fakeReviews: 0, hasFakeData: false });
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to remove fake data');
+    } finally {
+      setRemoving(false);
+    }
+  };
+
+  if (!fakeDataStats) {
+    return null;
+  }
+
+  if (!fakeDataStats.hasFakeData) {
+    return null; // Don't show section if no fake data
+  }
+
+  return (
+    <div className="section-card card" style={{
+      background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+      border: '2px solid #ef4444',
+      marginBottom: '24px'
+    }}>
+      <h2 style={{ marginTop: 0, color: '#991b1b' }}>🗑️ Remove Fake Data</h2>
+      <p style={{ color: '#991b1b', marginBottom: '16px' }}>
+        Found <strong>{fakeDataStats.fakeRAs}</strong> fake RAs and <strong>{fakeDataStats.fakeReviews}</strong> fake reviews with invisible markers.
+      </p>
+      {error && (
+        <div className="error-message" style={{ marginBottom: '12px' }}>
+          {error}
+        </div>
+      )}
+      {success && (
+        <div style={{
+          background: '#d1fae5',
+          color: '#065f46',
+          padding: '12px',
+          borderRadius: '6px',
+          marginBottom: '12px'
+        }}>
+          ✅ Successfully removed {success.rasRemoved} RAs and {success.reviewsRemoved} reviews
+        </div>
+      )}
+      <button
+        onClick={handleRemoveFakeData}
+        disabled={removing}
+        className="btn btn-danger"
+        style={{ width: '100%' }}
+      >
+        {removing ? 'Removing...' : '🗑️ Remove All Fake Data'}
+      </button>
+      <p style={{ fontSize: '12px', color: '#991b1b', marginTop: '8px', marginBottom: 0 }}>
+        This will permanently delete all fake data marked with invisible Unicode characters. Real user data will not be affected.
+      </p>
     </div>
   );
 }

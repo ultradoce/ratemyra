@@ -532,6 +532,143 @@ router.post('/cleanup-tags', async (req, res, next) => {
 });
 
 /**
+ * POST /api/admin/remove-fake-data
+ * Remove all fake data (RAs and reviews with invisible markers)
+ */
+router.post('/remove-fake-data', async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    // Invisible markers
+    const FAKE_DORM_MARKER = '\u200C'; // Zero-width non-joiner
+    const FAKE_REVIEW_MARKER = '\u200B'; // Zero-width space
+
+    console.log('🗑️  Starting to remove fake data...');
+
+    // Step 1: Find all fake RAs
+    const fakeRAs = await prisma.rA.findMany({
+      where: {
+        dorm: {
+          startsWith: FAKE_DORM_MARKER,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    console.log(`   Found ${fakeRAs.length} fake RAs`);
+
+    // Step 2: Delete fake reviews first
+    const reviewsDeleted = await prisma.review.deleteMany({
+      where: {
+        textBody: {
+          startsWith: FAKE_REVIEW_MARKER,
+        },
+      },
+    });
+
+    console.log(`   Deleted ${reviewsDeleted.count} fake reviews`);
+
+    // Step 3: Delete fake RAs
+    const fakeRAIds = fakeRAs.map(ra => ra.id);
+    const rasDeleted = await prisma.rA.deleteMany({
+      where: {
+        id: {
+          in: fakeRAIds,
+        },
+      },
+    });
+
+    console.log(`   Deleted ${rasDeleted.count} fake RAs`);
+
+    // Step 4: Clean up orphaned tag stats
+    const allTagStats = await prisma.rATagStat.findMany({
+      select: {
+        id: true,
+        raId: true,
+      },
+    });
+
+    const existingRAIds = new Set(
+      (await prisma.rA.findMany({ select: { id: true } })).map(ra => ra.id)
+    );
+
+    const orphanedTagStats = allTagStats.filter(stat => !existingRAIds.has(stat.raId));
+    
+    let tagStatsDeleted = 0;
+    if (orphanedTagStats.length > 0) {
+      const deletedTagStats = await prisma.rATagStat.deleteMany({
+        where: {
+          id: {
+            in: orphanedTagStats.map(stat => stat.id),
+          },
+        },
+      });
+      tagStatsDeleted = deletedTagStats.count;
+    }
+
+    // Invalidate all caches
+    await deleteCache('*');
+
+    res.json({
+      success: true,
+      message: 'Fake data removed successfully',
+      summary: {
+        rasRemoved: rasDeleted.count,
+        reviewsRemoved: reviewsDeleted.count,
+        tagStatsRemoved: tagStatsDeleted,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Error removing fake data:', error);
+    next(error);
+  }
+});
+
+/**
+ * GET /api/admin/fake-data-stats
+ * Get count of fake data (for preview before deletion)
+ */
+router.get('/fake-data-stats', async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const FAKE_DORM_MARKER = '\u200C';
+    const FAKE_REVIEW_MARKER = '\u200B';
+
+    const [fakeRAsCount, fakeReviewsCount] = await Promise.all([
+      prisma.rA.count({
+        where: {
+          dorm: {
+            startsWith: FAKE_DORM_MARKER,
+          },
+        },
+      }),
+      prisma.review.count({
+        where: {
+          textBody: {
+            startsWith: FAKE_REVIEW_MARKER,
+          },
+        },
+      }),
+    ]);
+
+    res.json({
+      fakeRAs: fakeRAsCount,
+      fakeReviews: fakeReviewsCount,
+      hasFakeData: fakeRAsCount > 0 || fakeReviewsCount > 0,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * POST /api/admin/help-request
  * Submit a help request from admin dashboard
  */
