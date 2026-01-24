@@ -347,34 +347,40 @@ process.on('uncaughtException', (error) => {
   // Don't exit immediately, let the server try to handle it
 });
 
-// Start server and create default admin
-(async () => {
-  try {
-    // Start server first (don't wait for admin creation)
-    const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
-      console.log(`🌐 Health check: http://0.0.0.0:${PORT}/api/health`);
-      console.log(`🔐 Default Admin Login:`);
-      console.log(`   Email: admin@ratemyra.com`);
-      console.log(`   Password: admin123`);
-      console.log(`📋 Setup endpoint: http://0.0.0.0:${PORT}/api/setup`);
-      console.log(`💡 If tables don't exist, visit /api/setup to run migrations`);
-    });
-    
-    // Ensure default admin exists (non-blocking - server already started)
-    ensureDefaultAdmin().catch(err => {
-      if (err.code === 'P2021') {
-        console.log('ℹ️  Database tables not created yet. Visit /api/setup to create them.');
-      } else {
-        console.error('⚠️  Admin creation failed, but server will continue:', err.message);
-      }
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    console.error('Stack:', error.stack);
+// Start server immediately - don't wait for anything
+console.log('🚀 Starting server...');
+console.log(`   PORT: ${PORT}`);
+console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+
+// Start server FIRST - before any async operations
+const server = app.listen(PORT, '0.0.0.0', (err) => {
+  if (err) {
+    console.error('❌ Failed to start server:', err);
     process.exit(1);
   }
-})();
+  console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
+  console.log(`🌐 Health check: http://0.0.0.0:${PORT}/api/health`);
+  console.log(`📋 Setup endpoint: http://0.0.0.0:${PORT}/api/setup`);
+});
+
+// Handle server errors
+server.on('error', (err) => {
+  console.error('❌ Server error:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`   Port ${PORT} is already in use`);
+  }
+});
+
+// Ensure default admin exists (non-blocking - server already started)
+setTimeout(() => {
+  ensureDefaultAdmin().catch(err => {
+    if (err.code === 'P2021') {
+      console.log('ℹ️  Database tables not created yet. Visit /api/setup to create them.');
+    } else {
+      console.error('⚠️  Admin creation failed, but server will continue:', err.message);
+    }
+  });
+}, 1000); // Wait 1 second after server starts
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
