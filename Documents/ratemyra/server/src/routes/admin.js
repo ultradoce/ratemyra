@@ -17,6 +17,10 @@ router.use(requireAdmin);
  */
 router.get('/dashboard', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const [
       totalRAs,
       totalReviews,
