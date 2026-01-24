@@ -115,6 +115,16 @@ function AdminDashboard() {
               <div className="stat-label">Schools</div>
             </div>
           </div>
+
+          {dashboardData?.stats.unreadHelpMessages > 0 && (
+            <div className="stat-card card warning">
+              <div className="stat-icon">📬</div>
+              <div className="stat-content">
+                <div className="stat-value">{dashboardData?.stats.unreadHelpMessages || 0}</div>
+                <div className="stat-label">Unread Help Messages</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {dashboardData?.stats.totalSchools === 0 && (

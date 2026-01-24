@@ -28,6 +28,7 @@ router.get('/dashboard', async (req, res, next) => {
       flaggedReviews,
       hiddenReviews,
       totalSchools,
+      unreadHelpMessages,
       recentReviews,
       recentRAs,
     ] = await Promise.all([
@@ -37,6 +38,7 @@ router.get('/dashboard', async (req, res, next) => {
       prisma.review.count({ where: { status: 'FLAGGED' } }),
       prisma.review.count({ where: { status: 'HIDDEN' } }),
       prisma.school.count(),
+      prisma.helpMessage.count({ where: { status: 'UNREAD' } }),
       prisma.review.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
@@ -71,6 +73,7 @@ router.get('/dashboard', async (req, res, next) => {
         flaggedReviews,
         hiddenReviews,
         totalSchools,
+        unreadHelpMessages,
       },
       recentReviews,
       recentRAs,
