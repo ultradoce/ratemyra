@@ -9,6 +9,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed:schools": "node scripts/seed-schools.js",
+    "db:seed:fake": "node scripts/seed-fake-data.js",
     "db:studio": "prisma studio",
     "create-admin": "node scripts/create-admin.js",
     "cleanup-tags": "node scripts/cleanup-removed-tags.js"
