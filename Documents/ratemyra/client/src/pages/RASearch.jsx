@@ -19,7 +19,7 @@ function RASearch() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showSchoolSelector, setShowSchoolSelector] = useState(false);
+  const [showSchoolSelector, setShowSchoolSelector] = useState(!!schoolId);
 
   // Fetch school details if schoolId is in URL
   useEffect(() => {
