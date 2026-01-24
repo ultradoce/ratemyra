@@ -70,11 +70,16 @@ function EditReview() {
 
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      // Editing requires authentication, but public login is no longer available
+      setError('Review editing is not available. Reviews cannot be edited after submission.');
+      setLoading(false);
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
       return;
     }
     fetchReview();
-  }, [id, user]);
+  }, [id, user, navigate]);
 
   const fetchReview = async () => {
     try {

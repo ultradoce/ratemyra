@@ -89,8 +89,8 @@ function Home() {
           </div>
           
           <div className="join-cta">
-            <Link to="/login" className="btn btn-primary btn-large">
-              Sign up now!
+            <Link to="/add-ra" className="btn btn-primary btn-large">
+              Get Started
             </Link>
           </div>
         </div>

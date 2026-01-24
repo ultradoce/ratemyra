@@ -4,20 +4,30 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
 import './AdminDashboard.css';
+import '../pages/Login.css';
 
 function AdminDashboard() {
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading, login, logout } = useAuth();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [showHelpModal, setShowHelpModal] = useState(false);
+  
+  // Login form state
+  const [loginFormData, setLoginFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loginError, setLoginError] = useState(null);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        navigate('/login');
+        // Don't navigate, show login form instead
+        setLoading(false);
       } else if (!isAdmin) {
         navigate('/');
       } else {
@@ -38,7 +48,118 @@ function AdminDashboard() {
     }
   };
 
-  if (authLoading || loading) {
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError(null);
+
+    const result = await login(loginFormData.email, loginFormData.password);
+
+    if (result.success) {
+      if (result.user?.role !== 'ADMIN') {
+        setLoginError('Access denied. Admin privileges required.');
+        logout();
+      } else {
+        // Login successful, will trigger useEffect to fetch dashboard
+        setLoginFormData({ email: '', password: '' });
+      }
+    } else {
+      setLoginError(result.error);
+    }
+    setLoginLoading(false);
+  };
+
+  const handleLoginChange = (e) => {
+    const { name, value } = e.target;
+    setLoginFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (loginError) setLoginError(null);
+  };
+
+  if (authLoading) {
+    return (
+      <div className="container">
+        <LoadingSpinner fullScreen size="large" />
+      </div>
+    );
+  }
+
+  // Show login form if not authenticated or not admin
+  if (!user || !isAdmin) {
+    return (
+      <div className="login-page">
+        <div className="login-container">
+          <div className="login-card card">
+            <h1>Admin Login</h1>
+            <p className="login-subtitle">Sign in to access the admin dashboard</p>
+
+            {loginError && (
+              <div className="error-message">{loginError}</div>
+            )}
+
+            <form onSubmit={handleLoginSubmit} className="login-form">
+              <div className="form-group">
+                <label htmlFor="admin-email">Email</label>
+                <input
+                  type="email"
+                  id="admin-email"
+                  name="email"
+                  value={loginFormData.email}
+                  onChange={handleLoginChange}
+                  className="input"
+                  placeholder="admin@example.com"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="admin-password">Password</label>
+                <input
+                  type="password"
+                  id="admin-password"
+                  name="password"
+                  value={loginFormData.password}
+                  onChange={handleLoginChange}
+                  className="input"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary btn-block"
+                disabled={loginLoading}
+              >
+                {loginLoading ? (
+                  <>
+                    <span className="loading-spinner"></span>
+                    Logging in...
+                  </>
+                ) : (
+                  'Login'
+                )}
+              </button>
+            </form>
+
+            <div className="login-footer">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="link-button"
+              >
+                ← Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
     return (
       <div className="container">
         <LoadingSpinner fullScreen size="large" />

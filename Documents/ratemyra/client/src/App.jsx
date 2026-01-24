@@ -10,7 +10,6 @@ import RASearch from './pages/RASearch';
 import RADetail from './pages/RADetail';
 import SubmitReview from './pages/SubmitReview';
 import AddRA from './pages/AddRA';
-import Login from './pages/Login';
 import Help from './pages/Help';
 import Guidelines from './pages/Guidelines';
 import Terms from './pages/Terms';
@@ -36,7 +35,6 @@ function App() {
                 <Route path="/ra/:id" element={<RADetail />} />
                 <Route path="/ra/:id/review" element={<SubmitReview />} />
                 <Route path="/review/:id/edit" element={<EditReview />} />
-                <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/help" element={<Help />} />
                 <Route path="/guidelines" element={<Guidelines />} />

@@ -27,9 +27,9 @@ function VerifyEmail() {
       setStatus('success');
       setMessage(response.data.message || 'Email verified successfully!');
       
-      // Redirect to login after 3 seconds
+      // Redirect to home after 3 seconds
       setTimeout(() => {
-        navigate('/login');
+        navigate('/');
       }, 3000);
     } catch (err) {
       setStatus('error');
@@ -38,9 +38,8 @@ function VerifyEmail() {
   };
 
   const handleResend = async () => {
-    // This would need the user's email, but we don't have it from the token
-    // For now, redirect to login with a message
-    navigate('/login?resend=true');
+    // Email verification is no longer needed since login is removed
+    navigate('/');
   };
 
   return (
@@ -61,9 +60,9 @@ function VerifyEmail() {
               <div className="verify-icon success">✅</div>
               <h1>Email Verified!</h1>
               <p>{message}</p>
-              <p className="redirect-message">Redirecting to login...</p>
-              <Link to="/login" className="btn btn-primary">
-                Go to Login
+              <p className="redirect-message">Redirecting to home...</p>
+              <Link to="/" className="btn btn-primary">
+                Go to Home
               </Link>
             </>
           )}
@@ -74,12 +73,9 @@ function VerifyEmail() {
               <h1>Verification Failed</h1>
               <p>{message}</p>
               <div className="verify-actions">
-                <Link to="/login" className="btn btn-primary">
-                  Go to Login
+                <Link to="/" className="btn btn-primary">
+                  Go to Home
                 </Link>
-                <button onClick={handleResend} className="btn btn-outline">
-                  Resend Verification Email
-                </button>
               </div>
             </>
           )}

@@ -58,14 +58,12 @@ function Header() {
             <Link to="/search" onClick={() => setMobileMenuOpen(false)}>Search RAs</Link>
             <Link to="/add-ra" onClick={() => setMobileMenuOpen(false)}>Add RA</Link>
             {isAdmin && (
-              <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>Admin</Link>
-            )}
-            {user ? (
-              <button onClick={handleLogout} className="link-button">
-                Logout
-              </button>
-            ) : (
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Login</Link>
+              <>
+                <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>Admin</Link>
+                <button onClick={handleLogout} className="link-button">
+                  Logout
+                </button>
+              </>
             )}
           </nav>
         </div>

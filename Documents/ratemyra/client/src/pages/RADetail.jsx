@@ -351,15 +351,7 @@ function RADetail() {
                         👎 Not Helpful ({review.notHelpfulCount || 0})
                       </button>
                     </div>
-                    {user && review.userId === user.id && (
-                      <button
-                        type="button"
-                        className="edit-review-btn"
-                        onClick={() => handleEditReview(review.id)}
-                      >
-                        ✏️ Edit
-                      </button>
-                    )}
+                    {/* Edit functionality removed - login no longer available for regular users */}
                   </div>
                 </div>
               ))}
