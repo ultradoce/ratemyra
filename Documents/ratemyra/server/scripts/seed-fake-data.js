@@ -235,7 +235,7 @@ export async function seedFakeData() {
 }
 
 // Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.includes('seed-fake-data')) {
   seedFakeData()
     .then(() => {
       console.log('✅ Done!');
