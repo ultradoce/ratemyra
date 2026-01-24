@@ -12,14 +12,10 @@ const REVIEW_TAGS = {
   ORGANIZED: 'Organized',
   FAIR: 'Fair',
   SUPPORTIVE: 'Supportive',
-  TOUGH_GRADER: 'Tough Grader',
   STRICT: 'Strict',
   UNORGANIZED: 'Unorganized',
   UNRESPONSIVE: 'Unresponsive',
   HARSH: 'Harsh',
-  PARTICIPATION_MATTERS: 'Participation Matters',
-  GROUP_WORK: 'Group Work',
-  INDEPENDENT_WORK: 'Independent Work',
 };
 
 function SubmitReview() {

@@ -14,16 +14,10 @@ export const REVIEW_TAGS = {
   SUPPORTIVE: 'SUPPORTIVE',
   
   // Neutral/Negative tags
-  TOUGH_GRADER: 'TOUGH_GRADER',
   STRICT: 'STRICT',
   UNORGANIZED: 'UNORGANIZED',
   UNRESPONSIVE: 'UNRESPONSIVE',
   HARSH: 'HARSH',
-  
-  // Activity tags
-  PARTICIPATION_MATTERS: 'PARTICIPATION_MATTERS',
-  GROUP_WORK: 'GROUP_WORK',
-  INDEPENDENT_WORK: 'INDEPENDENT_WORK',
 };
 
 export const TAG_DISPLAY_NAMES = {
@@ -34,14 +28,10 @@ export const TAG_DISPLAY_NAMES = {
   ORGANIZED: 'Organized',
   FAIR: 'Fair',
   SUPPORTIVE: 'Supportive',
-  TOUGH_GRADER: 'Tough Grader',
   STRICT: 'Strict',
   UNORGANIZED: 'Unorganized',
   UNRESPONSIVE: 'Unresponsive',
   HARSH: 'Harsh',
-  PARTICIPATION_MATTERS: 'Participation Matters',
-  GROUP_WORK: 'Group Work',
-  INDEPENDENT_WORK: 'Independent Work',
 };
 
 /**
