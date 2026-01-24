@@ -12,6 +12,7 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -57,9 +58,22 @@ function AdminDashboard() {
     <div className="admin-dashboard">
       <div className="container">
         <div className="admin-header">
-          <h1>Admin Dashboard</h1>
-          <p className="admin-subtitle">Welcome, {user?.email}</p>
+          <div>
+            <h1>Admin Dashboard</h1>
+            <p className="admin-subtitle">Welcome, {user?.email}</p>
+          </div>
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="btn btn-outline"
+            style={{ alignSelf: 'flex-start' }}
+          >
+            💬 Get Help
+          </button>
         </div>
+
+        {showHelpModal && (
+          <HelpModal onClose={() => setShowHelpModal(false)} userEmail={user?.email} />
+        )}
 
         <div className="stats-grid">
           <div className="stat-card card">
@@ -452,6 +466,168 @@ function RAsManagement() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function HelpModal({ onClose, userEmail }) {
+  const [formData, setFormData] = useState({
+    subject: '',
+    category: 'general',
+    message: '',
+    email: userEmail || ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await axios.post('/api/admin/help-request', formData);
+      
+      if (response.data.success) {
+        setSubmitted(true);
+        setTimeout(() => {
+          onClose();
+          setSubmitted(false);
+          setFormData({
+            subject: '',
+            category: 'general',
+            message: '',
+            email: userEmail || ''
+          });
+        }, 2000);
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.errors?.[0]?.msg || 
+                          err.response?.data?.error || 
+                          'Failed to submit help request. Please try again.';
+      setError(errorMessage);
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Get Help</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+
+        {submitted ? (
+          <div className="modal-body">
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
+              <h3 style={{ color: 'var(--success)', marginBottom: '8px' }}>Request Submitted!</h3>
+              <p style={{ color: 'var(--text-light)' }}>We'll get back to you soon.</p>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="modal-body">
+            {error && (
+              <div className="error-message" style={{ marginBottom: '16px' }}>
+                {error}
+              </div>
+            )}
+
+            <div className="form-group">
+              <label htmlFor="email">Your Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="input"
+                required
+                placeholder="your@email.com"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="category">Category</label>
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="input"
+                required
+              >
+                <option value="general">General Question</option>
+                <option value="technical">Technical Issue</option>
+                <option value="feature">Feature Request</option>
+                <option value="bug">Bug Report</option>
+                <option value="account">Account Issue</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="subject">Subject</label>
+              <input
+                type="text"
+                id="subject"
+                name="subject"
+                value={formData.subject}
+                onChange={handleChange}
+                className="input"
+                required
+                placeholder="Brief description of your issue"
+                maxLength={100}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="message">Message</label>
+              <textarea
+                id="message"
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
+                className="input"
+                required
+                rows={6}
+                placeholder="Please provide details about your question or issue..."
+                style={{ resize: 'vertical', fontFamily: 'inherit' }}
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn btn-secondary"
+                disabled={submitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={submitting}
+              >
+                {submitting ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

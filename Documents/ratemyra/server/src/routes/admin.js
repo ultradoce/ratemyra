@@ -433,4 +433,45 @@ router.post('/seed-schools', async (req, res, next) => {
   }
 });
 
+/**
+ * POST /api/admin/help-request
+ * Submit a help request from admin dashboard
+ */
+router.post('/help-request', [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('subject').notEmpty().withMessage('Subject is required'),
+  body('message').notEmpty().withMessage('Message is required'),
+  body('category').optional().isIn(['general', 'technical', 'feature', 'bug', 'account', 'other']),
+], async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, subject, message, category } = req.body;
+
+    // Log the help request (in production, you might want to store this in a database or send via email)
+    console.log('📧 Help Request Received:');
+    console.log('   From:', email);
+    console.log('   Category:', category || 'general');
+    console.log('   Subject:', subject);
+    console.log('   Message:', message);
+    console.log('   Timestamp:', new Date().toISOString());
+
+    // TODO: In the future, you could:
+    // 1. Store help requests in a database table
+    // 2. Send email notification to support team
+    // 3. Create a ticket in a support system
+    // 4. Send auto-reply to the user
+
+    res.json({
+      success: true,
+      message: 'Help request submitted successfully. We will get back to you soon.',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
