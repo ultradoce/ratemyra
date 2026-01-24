@@ -271,32 +271,48 @@ function ShareReviewButton({ review, ra }) {
       tempContainer.innerHTML = cardHTML;
       // Position off-screen but visible for rendering
       tempContainer.style.position = 'fixed';
-      tempContainer.style.top = '-10000px';
+      tempContainer.style.top = '0';
       tempContainer.style.left = '0';
+      tempContainer.style.width = '800px';
+      tempContainer.style.height = 'auto';
       tempContainer.style.zIndex = '9999';
       tempContainer.style.visibility = 'visible';
       tempContainer.style.opacity = '1';
       tempContainer.style.pointerEvents = 'none';
+      tempContainer.style.overflow = 'visible';
       
       document.body.appendChild(tempContainer);
 
-      // Wait for fonts and rendering
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Force a reflow to ensure rendering
+      void tempContainer.offsetHeight;
 
-      // Generate image - target the inner card div directly
-      const cardElement = tempContainer.querySelector('div > div');
+      // Wait for fonts and rendering
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Get the actual card element (first child div)
+      const cardElement = tempContainer.firstElementChild;
       if (!cardElement) {
         throw new Error('Card element not found');
       }
 
+      // Ensure card has explicit dimensions
+      const cardHeight = cardElement.scrollHeight || cardElement.offsetHeight || 600;
+      cardElement.style.height = `${cardHeight}px`;
+      cardElement.style.display = 'block';
+
+      console.log('Generating image from element:', cardElement, 'Height:', cardHeight);
+
+      // Generate image
       const dataUrl = await htmlToImage.toPng(cardElement, {
         quality: 1.0,
         pixelRatio: 2,
         backgroundColor: '#ffffff',
         cacheBust: true,
         width: 800,
-        height: cardElement.scrollHeight,
+        height: cardHeight,
       });
+
+      console.log('Image generated, data URL length:', dataUrl.length);
 
       // Clean up
       document.body.removeChild(tempContainer);
