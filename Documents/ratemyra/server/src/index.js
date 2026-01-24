@@ -113,9 +113,19 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Create default admin account if it doesn't exist
 async function ensureDefaultAdmin() {
+  // Check if DATABASE_URL is set
+  if (!process.env.DATABASE_URL) {
+    console.log('⚠️  DATABASE_URL not set. Skipping admin account creation.');
+    console.log('   Add PostgreSQL database in Railway to enable admin account.');
+    return;
+  }
+
   try {
     const DEFAULT_ADMIN_EMAIL = 'admin@ratemyra.com';
     const DEFAULT_ADMIN_PASSWORD = 'admin123';
+    
+    // Test database connection first
+    await prisma.$connect();
     
     // Check if admin already exists
     const existing = await prisma.user.findUnique({
@@ -154,7 +164,13 @@ async function ensureDefaultAdmin() {
     console.log(`   Password: ${DEFAULT_ADMIN_PASSWORD}`);
     console.log(`   Role: ${admin.role}`);
   } catch (error) {
-    console.error('⚠️  Error creating default admin:', error.message);
+    // Handle specific Prisma errors
+    if (error.code === 'P1001' || error.code === 'P1012') {
+      console.error('⚠️  Database connection error. Cannot create admin account.');
+      console.error('   Make sure PostgreSQL is added to Railway and DATABASE_URL is set.');
+    } else {
+      console.error('⚠️  Error creating default admin:', error.message);
+    }
     // Don't fail server startup if admin creation fails
   }
 }
