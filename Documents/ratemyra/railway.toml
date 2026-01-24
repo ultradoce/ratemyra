@@ -3,6 +3,10 @@ builder = "RAILPACK"
 watchPatterns = ["**/*.js", "**/*.json", "**/*.toml", "**/*.ts", "**/*.tsx", "**/*.jsx"]
 useMetalBuild = true
 
+# Force Railpack to use Node.js 20
+[build.railpack]
+nodeVersion = "20"
+
 [deploy]
 startCommand = "cd server && npm start"
 healthcheckPath = "/api/health"
