@@ -328,7 +328,9 @@ router.get('/:raId', async (req, res, next) => {
       }
     }
 
-    const [reviews, total] = await Promise.all([
+    // Fetch reviews - use include to get all fields, then manually select what we need
+    // This is more defensive if migrations haven't run yet
+    const [reviewsRaw, total] = await Promise.all([
       prisma.review.findMany({
         where: {
           raId,
@@ -337,24 +339,6 @@ router.get('/:raId', async (req, res, next) => {
         orderBy: { timestamp: 'desc' },
         skip,
         take: limitNum,
-        select: {
-          id: true,
-          courseCode: true,
-          semesters: true,
-          ratingClarity: true,
-          ratingHelpfulness: true,
-          ratingOverall: true,
-          difficulty: true,
-          wouldTakeAgain: true,
-          tags: true,
-          attendanceRequired: true,
-          textBody: true,
-          timestamp: true,
-          helpfulCount: true,
-          notHelpfulCount: true,
-          userId: true,
-          // Don't expose IP hash or device fingerprint
-        },
       }),
       prisma.review.count({
         where: {
@@ -363,6 +347,25 @@ router.get('/:raId', async (req, res, next) => {
         },
       }),
     ]);
+
+    // Map reviews to only include safe fields (defensive against missing columns)
+    const reviews = reviewsRaw.map(review => ({
+      id: review.id,
+      courseCode: review.courseCode,
+      semesters: review.semesters || [],
+      ratingClarity: review.ratingClarity,
+      ratingHelpfulness: review.ratingHelpfulness,
+      ratingOverall: review.ratingOverall,
+      difficulty: review.difficulty,
+      wouldTakeAgain: review.wouldTakeAgain,
+      tags: review.tags || [],
+      attendanceRequired: review.attendanceRequired,
+      textBody: review.textBody,
+      timestamp: review.timestamp,
+      helpfulCount: review.helpfulCount ?? 0,
+      notHelpfulCount: review.notHelpfulCount ?? 0,
+      userId: review.userId || null,
+    }));
 
     const response = {
       reviews,
