@@ -5,7 +5,8 @@ import './Login.css';
 
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,7 +28,9 @@ function Login() {
     setLoading(true);
     setError(null);
 
-    const result = await login(formData.email, formData.password);
+    const result = isLogin
+      ? await login(formData.email, formData.password)
+      : await register(formData.email, formData.password);
 
     if (result.success) {
       // Check if user is admin, redirect accordingly
@@ -48,9 +51,11 @@ function Login() {
     <div className="login-page">
       <div className="login-container">
         <div className="login-card card">
-          <h1>Admin Login</h1>
+          <h1>{isLogin ? 'Login' : 'Create Account'}</h1>
           <p className="login-subtitle">
-            Sign in to access the admin dashboard
+            {isLogin
+              ? 'Sign in to your account'
+              : 'Create an account to write reviews and add RAs'}
           </p>
 
           {error && (
@@ -67,7 +72,7 @@ function Login() {
                 value={formData.email}
                 onChange={handleChange}
                 className="input"
-                placeholder="your@email.com"
+                placeholder="you@example.com"
                 required
               />
             </div>
@@ -95,14 +100,29 @@ function Login() {
               {loading ? (
                 <>
                   <span className="loading-spinner"></span>
-                  Logging in...
+                  {isLogin ? 'Logging in...' : 'Creating account...'}
                 </>
               ) : (
-                'Login'
+                isLogin ? 'Login' : 'Create Account'
               )}
             </button>
           </form>
 
+
+          <div className="login-switch">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(null);
+              }}
+              className="link-button"
+            >
+              {isLogin
+                ? "Don't have an account? Create one"
+                : 'Already have an account? Login'}
+            </button>
+          </div>
 
           <div className="login-footer">
             <Link to="/" className="link-button">
