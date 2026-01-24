@@ -7,6 +7,7 @@ import { hashIP, hashDeviceFingerprint, getClientIP, detectSimilarReviews } from
 import { validateTags, updateTagStats, TAG_DISPLAY_NAMES } from '../utils/tags.js';
 import { deleteCache, cacheKeys, getCache, setCache } from '../utils/cache.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { validateReviewContent } from '../utils/contentFilter.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -182,6 +183,17 @@ router.post(
         if (totalDailyReviewsByDevice >= 20) {
           return res.status(429).json({
             error: 'Daily review limit reached. Please try again tomorrow.',
+          });
+        }
+      }
+
+      // Check for profanity in review text
+      if (textBody) {
+        const contentValidation = validateReviewContent(textBody);
+        if (!contentValidation.isValid) {
+          return res.status(400).json({
+            error: contentValidation.error,
+            matchedWords: contentValidation.matchedWords,
           });
         }
       }
@@ -581,7 +593,17 @@ router.patch('/:id', authenticateToken, [
       }
       updateData.semesters = req.body.semesters;
     }
-    if (req.body.textBody !== undefined) updateData.textBody = req.body.textBody;
+    if (req.body.textBody !== undefined) {
+      // Check for profanity in updated review text
+      const contentValidation = validateReviewContent(req.body.textBody);
+      if (!contentValidation.isValid) {
+        return res.status(400).json({
+          error: contentValidation.error,
+          matchedWords: contentValidation.matchedWords,
+        });
+      }
+      updateData.textBody = req.body.textBody;
+    }
     if (req.body.wouldTakeAgain !== undefined) updateData.wouldTakeAgain = req.body.wouldTakeAgain;
     
     if (req.body.tags !== undefined) {
