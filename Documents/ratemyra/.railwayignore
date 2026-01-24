@@ -8,4 +8,13 @@ node_modules
 .idea
 client/dist
 server/prisma/migrations
-Documents
+Documents/ratemyra/.git
+Documents/ratemyra/.vscode
+Documents/ratemyra/.idea
+Documents/ratemyra/node_modules
+Documents/ratemyra/client/dist
+Documents/ratemyra/server/prisma/migrations
+Documents/ratemyra/.env
+Documents/ratemyra/.env.local
+Documents/ratemyra/*.log
+Documents/ratemyra/.DS_Store
