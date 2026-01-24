@@ -17,11 +17,13 @@ router.get('/', async (req, res, next) => {
     }
 
     const { q, schoolId, limit = 20 } = req.query;
+    
+    console.log('Search endpoint called:', { q, schoolId, limit, queryKeys: Object.keys(req.query) });
 
     // Validate schoolId - handle both string and non-string values
     const schoolIdStr = schoolId ? String(schoolId).trim() : '';
     if (!schoolIdStr || schoolIdStr.length === 0) {
-      console.error('Search endpoint: Missing or invalid schoolId', { schoolId, q, limit });
+      console.error('Search endpoint: Missing or invalid schoolId', { schoolId, q, limit, type: typeof schoolId });
       return res.status(400).json({ 
         error: 'School ID is required',
         received: { schoolId, q, limit }
@@ -30,6 +32,8 @@ router.get('/', async (req, res, next) => {
 
     // Allow empty or very short queries - just return empty results
     const searchTerm = q ? String(q).trim() : '';
+    
+    console.log('Search params processed:', { searchTerm, schoolIdStr, limit });
     
     // Return empty results for empty queries (don't error)
     if (searchTerm.length === 0) {
@@ -129,6 +133,20 @@ router.get('/', async (req, res, next) => {
 
     res.json(response);
   } catch (error) {
+    console.error('Search endpoint error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      name: error.name,
+      stack: error.stack?.substring(0, 500)
+    });
+    // Don't send 400 for database errors - send 500
+    if (error.code && error.code.startsWith('P')) {
+      return res.status(500).json({ 
+        error: 'Database error',
+        message: error.message 
+      });
+    }
     next(error);
   }
 });
