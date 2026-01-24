@@ -81,19 +81,9 @@ function SubmitReview() {
           if (season === 'Fall' && currentMonth < 8) continue; // Fall starts in August
           if (season === 'Summer' && currentMonth < 5) continue; // Summer starts in May
           if (season === 'Spring' && currentMonth < 1) continue; // Spring starts in January
-          // If we're in the semester, show it
-          if (season === 'Spring' && currentMonth >= 0 && currentMonth < 5) {
-            semesters.push(semesterStr);
-            continue;
-          }
-          if (season === 'Summer' && currentMonth >= 5 && currentMonth < 8) {
-            semesters.push(semesterStr);
-            continue;
-          }
-          if (season === 'Fall' && currentMonth >= 8) {
-            semesters.push(semesterStr);
-            continue;
-          }
+          // If we're currently in this semester, include it
+          semesters.push(semesterStr);
+          continue;
         }
         
         // For past years, show all semesters
@@ -101,7 +91,8 @@ function SubmitReview() {
           semesters.push(semesterStr);
         }
         
-        // For future years (but not beyond max), show all semesters
+        // For future years (up to maxYear), show all semesters
+        // These will automatically appear as time progresses
         if (yearOffset > 0 && year <= maxYear) {
           semesters.push(semesterStr);
         }
