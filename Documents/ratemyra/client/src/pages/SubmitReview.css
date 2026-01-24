@@ -161,3 +161,59 @@ textarea.input {
   margin-top: 8px;
   font-style: italic;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .submit-review {
+    padding: 16px 0;
+  }
+
+  .submit-review h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    padding: 0 16px;
+  }
+
+  .review-form {
+    padding: 0 16px;
+  }
+
+  .rating-input {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .rating-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .tags-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .tag-checkbox {
+    padding: 12px;
+  }
+
+  .would-take-again-input {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .wta-btn {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}

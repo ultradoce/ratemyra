@@ -205,3 +205,94 @@
   font-size: 20px;
   font-weight: 600;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .home {
+    padding: 32px 0;
+  }
+
+  .hero {
+    margin-bottom: 48px;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+    margin-bottom: 16px;
+  }
+
+  .subtitle {
+    font-size: 18px;
+    margin-bottom: 32px;
+    padding: 0 16px;
+  }
+
+  .search-flow {
+    padding: 0 8px;
+    gap: 20px;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 48px;
+    padding: 0 16px;
+  }
+
+  .feature-card {
+    padding: 32px 24px;
+  }
+
+  .feature-card h3 {
+    font-size: 24px;
+  }
+
+  .join-section {
+    margin-top: 60px;
+    padding: 40px 24px;
+    border-radius: 16px;
+  }
+
+  .join-section h2 {
+    font-size: 28px;
+  }
+
+  .join-subtitle {
+    font-size: 16px;
+    margin-bottom: 32px;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .benefit-card {
+    padding: 24px 20px;
+  }
+
+  .benefit-icon {
+    font-size: 40px;
+  }
+
+  .btn-large {
+    width: 100%;
+    padding: 16px 32px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 28px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+  }
+
+  .join-section h2 {
+    font-size: 24px;
+  }
+}

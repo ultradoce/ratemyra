@@ -8,3 +8,9 @@ main {
   flex: 1;
   padding: 20px 0;
 }
+
+@media (max-width: 768px) {
+  main {
+    padding: 16px 0;
+  }
+}

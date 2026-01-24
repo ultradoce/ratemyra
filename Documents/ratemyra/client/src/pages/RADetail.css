@@ -588,10 +588,13 @@
   .helpful-btn,
   .not-helpful-btn {
     flex: 1;
+    padding: 10px 12px;
+    font-size: 13px;
   }
 
   .edit-review-btn {
     width: 100%;
+    padding: 10px;
   }
 }
 

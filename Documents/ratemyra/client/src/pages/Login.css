@@ -86,3 +86,18 @@
   border-left: 4px solid var(--danger);
   text-align: left;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .login-page {
+    padding: 24px 16px;
+  }
+
+  .login-card h1 {
+    font-size: 28px;
+  }
+
+  .login-subtitle {
+    font-size: 14px;
+  }
+}
