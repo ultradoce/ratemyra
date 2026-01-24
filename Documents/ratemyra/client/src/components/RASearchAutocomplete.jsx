@@ -12,6 +12,7 @@ function RASearchAutocomplete({ schoolId, selectedRA, onSelectRA, placeholder = 
   const [error, setError] = useState(null);
   const searchRef = useRef(null);
   const dropdownRef = useRef(null);
+  const debounceTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,17 +77,30 @@ function RASearchAutocomplete({ schoolId, selectedRA, onSelectRA, placeholder = 
     const value = e.target.value;
     setSearchTerm(value);
     
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
     // Debounce search
     if (value.trim().length > 0) {
-      const timeoutId = setTimeout(() => {
+      debounceTimeoutRef.current = setTimeout(() => {
         searchRAs(value);
       }, 300);
-      return () => clearTimeout(timeoutId);
     } else {
       setRAs([]);
       setShowDropdown(false);
     }
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSelectRA = (ra) => {
     setSearchTerm(`${ra.firstName} ${ra.lastName}`);
