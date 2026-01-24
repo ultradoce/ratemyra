@@ -43,12 +43,13 @@ if (!prisma) {
 app.use(cors());
 app.use(express.json());
 
-// Health check
+// Health check - MUST return 200 for Railway to consider service healthy
 app.get('/api/health', async (req, res) => {
   const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),
-    database: 'unknown'
+    database: 'unknown',
+    server: 'running'
   };
 
   if (prisma) {
@@ -57,17 +58,24 @@ app.get('/api/health', async (req, res) => {
       await prisma.$queryRaw`SELECT 1`;
       health.database = 'connected';
     } catch (error) {
+      // Even if database has issues, return 200 - server is running
       health.database = 'error';
       health.databaseError = error.message;
       health.databaseCode = error.code;
+      // If tables don't exist, suggest setup endpoint
+      if (error.code === 'P2021') {
+        health.database = 'tables_missing';
+        health.setupEndpoint = '/api/setup';
+      }
     }
   } else {
     health.database = 'not_configured';
     health.databaseUrlSet = !!process.env.DATABASE_URL;
   }
 
-  // Always return 200 for health check - Railway needs this to pass
-  // Database status is in the response body, not the status code
+  // CRITICAL: Always return 200 for health check
+  // Railway uses this to determine if service is healthy
+  // Database issues are reported in response body, not status code
   res.status(200).json(health);
 });
 
@@ -342,18 +350,24 @@ process.on('uncaughtException', (error) => {
 // Start server and create default admin
 (async () => {
   try {
-    // Ensure default admin exists (non-blocking - server will start even if this fails)
-    ensureDefaultAdmin().catch(err => {
-      console.error('⚠️  Admin creation failed, but server will continue:', err.message);
-    });
-    
-    app.listen(PORT, '0.0.0.0', () => {
+    // Start server first (don't wait for admin creation)
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
       console.log(`🌐 Health check: http://0.0.0.0:${PORT}/api/health`);
       console.log(`🔐 Default Admin Login:`);
       console.log(`   Email: admin@ratemyra.com`);
       console.log(`   Password: admin123`);
       console.log(`📋 Setup endpoint: http://0.0.0.0:${PORT}/api/setup`);
+      console.log(`💡 If tables don't exist, visit /api/setup to run migrations`);
+    });
+    
+    // Ensure default admin exists (non-blocking - server already started)
+    ensureDefaultAdmin().catch(err => {
+      if (err.code === 'P2021') {
+        console.log('ℹ️  Database tables not created yet. Visit /api/setup to create them.');
+      } else {
+        console.error('⚠️  Admin creation failed, but server will continue:', err.message);
+      }
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

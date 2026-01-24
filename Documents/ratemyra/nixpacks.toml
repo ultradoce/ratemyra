@@ -23,7 +23,8 @@ cmds = [
 [phases.release]
 cmds = [
   "echo '🔄 Release phase: Running migrations...'",
-  "(cd server && npx prisma migrate deploy || echo '⚠️ Migrations failed or already applied')"
+  "echo 'DATABASE_URL available:' $([ -n \"$DATABASE_URL\" ] && echo 'YES' || echo 'NO')",
+  "(cd server && npx prisma migrate deploy 2>&1 || (echo '⚠️ Migration command failed' && echo 'Exit code:' $? && echo 'This is OK - migrations can be run via /api/setup'))"
 ]
 
 [start]
