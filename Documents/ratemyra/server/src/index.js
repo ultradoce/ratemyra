@@ -196,6 +196,7 @@ const setupHandler = async (req, res) => {
       migrations: { success: false, message: '' },
       seeding: { success: false, message: '', created: 0, skipped: 0 },
       cleanup: { success: false, message: '' },
+      fakeDataFix: { success: false, message: '' },
       fakeData: { success: false, message: '' }
     };
 
@@ -360,7 +361,82 @@ const setupHandler = async (req, res) => {
       results.cleanup.message = cleanupError.message || 'Tag cleanup failed';
     }
 
-    // Step 5: Seed fake data (optional, for demo/testing)
+    // Step 5: Fix old fake data markers (replace visible [FAKE] with invisible markers)
+    try {
+      console.log('🔧 Fixing old fake data markers...');
+      const FAKE_DORM_MARKER = '\u200C'; // Zero-width non-joiner (invisible)
+      const FAKE_REVIEW_MARKER = '\u200B'; // Zero-width space (invisible)
+      
+      // Find RAs with visible [FAKE] marker
+      const rasWithVisibleMarker = await prisma.rA.findMany({
+        where: {
+          dorm: {
+            contains: '[FAKE]',
+          },
+        },
+      });
+
+      let rasFixed = 0;
+      for (const ra of rasWithVisibleMarker) {
+        // Replace [FAKE] with invisible marker at the start
+        const newDorm = ra.dorm.replace('[FAKE]', '');
+        await prisma.rA.update({
+          where: { id: ra.id },
+          data: { dorm: `${FAKE_DORM_MARKER}${newDorm}` },
+        });
+        rasFixed++;
+      }
+
+      // Find reviews that might have visible markers (check for any that don't have invisible marker)
+      // We'll add the invisible marker to reviews from fake RAs
+      const fakeRAIds = rasWithVisibleMarker.map(ra => ra.id);
+      if (fakeRAIds.length > 0) {
+        const reviewsToFix = await prisma.review.findMany({
+          where: {
+            raId: { in: fakeRAIds },
+            textBody: {
+              not: {
+                startsWith: FAKE_REVIEW_MARKER,
+              },
+            },
+          },
+        });
+
+        let reviewsFixed = 0;
+        for (const review of reviewsToFix) {
+          if (review.textBody && !review.textBody.startsWith(FAKE_REVIEW_MARKER)) {
+            await prisma.review.update({
+              where: { id: review.id },
+              data: { textBody: `${FAKE_REVIEW_MARKER}${review.textBody}` },
+            });
+            reviewsFixed++;
+          }
+        }
+
+        results.fakeDataFix = {
+          success: true,
+          message: `Fixed ${rasFixed} RAs and ${reviewsFixed} reviews with visible markers`,
+          rasFixed,
+          reviewsFixed,
+        };
+        console.log(`✅ Fixed ${rasFixed} RAs and ${reviewsFixed} reviews with visible markers`);
+      } else {
+        results.fakeDataFix = {
+          success: true,
+          message: 'No fake data with visible markers found',
+          rasFixed: 0,
+          reviewsFixed: 0,
+        };
+      }
+    } catch (fixError) {
+      console.error('❌ Fake data marker fix error:', fixError);
+      results.fakeDataFix = {
+        success: false,
+        message: fixError.message || 'Fake data marker fix failed',
+      };
+    }
+
+    // Step 6: Seed fake data (optional, for demo/testing)
     try {
       console.log('🎭 Seeding fake data for popular schools...');
       const { seedFakeData } = await import('../scripts/seed-fake-data.js');
