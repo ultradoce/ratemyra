@@ -1,6 +1,7 @@
 [build]
 builder = "NIXPACKS"
 watchPatterns = ["**/*.js", "**/*.json", "**/*.toml"]
+useMetalBuild = false
 
 [deploy]
 startCommand = "cd server && npm start"
