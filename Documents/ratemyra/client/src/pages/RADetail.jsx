@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
 import StarRating from '../components/StarRating';
 import EmptyState from '../components/EmptyState';
+import { useAuth } from '../context/AuthContext';
+import { collectDeviceFingerprint } from '../utils/deviceFingerprint';
 import './RADetail.css';
 
 function RADetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [ra, setRA] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +19,7 @@ function RADetail() {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
+  const [votingReviews, setVotingReviews] = useState(new Set());
 
   useEffect(() => {
     fetchRAData();
@@ -64,6 +69,35 @@ function RADetail() {
     if (pagination && page < pagination.pages) {
       setPage(prev => prev + 1);
     }
+  };
+
+  const handleLikeReview = async (reviewId, isHelpful) => {
+    if (votingReviews.has(reviewId)) return; // Prevent double-clicking
+    
+    setVotingReviews(prev => new Set(prev).add(reviewId));
+    
+    try {
+      const deviceFingerprint = collectDeviceFingerprint();
+      await axios.post(`/api/reviews/${reviewId}/like`, {
+        isHelpful,
+        deviceFingerprint,
+      });
+      
+      // Refresh reviews to get updated counts
+      fetchReviews(page);
+    } catch (err) {
+      console.error('Failed to vote on review:', err);
+    } finally {
+      setVotingReviews(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(reviewId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleEditReview = (reviewId) => {
+    navigate(`/review/${reviewId}/edit`);
   };
 
   if (loading) {
@@ -292,6 +326,36 @@ function RADetail() {
                       <p>{review.textBody}</p>
                     </div>
                   )}
+
+                  <div className="review-actions">
+                    <div className="review-helpful">
+                      <button
+                        type="button"
+                        className={`helpful-btn ${review.helpfulCount > 0 ? 'has-votes' : ''}`}
+                        onClick={() => handleLikeReview(review.id, true)}
+                        disabled={votingReviews.has(review.id)}
+                      >
+                        👍 Helpful ({review.helpfulCount || 0})
+                      </button>
+                      <button
+                        type="button"
+                        className={`not-helpful-btn ${review.notHelpfulCount > 0 ? 'has-votes' : ''}`}
+                        onClick={() => handleLikeReview(review.id, false)}
+                        disabled={votingReviews.has(review.id)}
+                      >
+                        👎 Not Helpful ({review.notHelpfulCount || 0})
+                      </button>
+                    </div>
+                    {user && review.userId === user.id && (
+                      <button
+                        type="button"
+                        className="edit-review-btn"
+                        onClick={() => handleEditReview(review.id)}
+                      >
+                        ✏️ Edit
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
               {reviewsLoading && (
