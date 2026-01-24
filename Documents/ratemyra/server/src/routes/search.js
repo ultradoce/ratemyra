@@ -18,13 +18,15 @@ router.get('/', async (req, res, next) => {
 
     const { q, schoolId, limit = 20 } = req.query;
 
-    if (!schoolId) {
+    // Validate schoolId
+    if (!schoolId || schoolId.trim().length === 0) {
       return res.status(400).json({ error: 'School ID is required' });
     }
 
-    // Allow empty queries - just return empty results
-    const searchTerm = q ? q.trim() : '';
+    // Allow empty or very short queries - just return empty results
+    const searchTerm = q ? String(q).trim() : '';
     
+    // Return empty results for empty queries (don't error)
     if (searchTerm.length === 0) {
       return res.json({
         query: '',
