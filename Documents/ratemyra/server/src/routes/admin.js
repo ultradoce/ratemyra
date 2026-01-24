@@ -144,6 +144,10 @@ router.patch(
   ],
   async (req, res, next) => {
     try {
+      if (!prisma) {
+        return res.status(503).json({ error: 'Database not available' });
+      }
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -186,6 +190,10 @@ router.patch(
  */
 router.delete('/reviews/:id', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const { id } = req.params;
 
     const review = await prisma.review.findUnique({
@@ -219,6 +227,10 @@ router.delete('/reviews/:id', async (req, res, next) => {
  */
 router.get('/ras', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const { page = 1, limit = 50, schoolId, search } = req.query;
 
     const pageNum = Math.max(1, parseInt(page));
@@ -272,6 +284,10 @@ router.get('/ras', async (req, res, next) => {
  */
 router.delete('/ras/:id', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const { id } = req.params;
 
     const ra = await prisma.rA.findUnique({
@@ -310,6 +326,10 @@ router.patch(
   ],
   async (req, res, next) => {
     try {
+      if (!prisma) {
+        return res.status(503).json({ error: 'Database not available' });
+      }
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -361,6 +381,10 @@ router.patch(
  */
 router.get('/schools', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const schools = await prisma.school.findMany({
       orderBy: { name: 'asc' },
       include: {
@@ -382,6 +406,10 @@ router.get('/schools', async (req, res, next) => {
  */
 router.post('/seed-schools', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     // Import and run seed function
     const { seedSchools } = await import('../../scripts/seed-schools.js');
     
