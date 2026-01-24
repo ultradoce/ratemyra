@@ -7,6 +7,7 @@ import './Home.css';
 function Home() {
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [selectedRA, setSelectedRA] = useState(null);
+  const [searchMode, setSearchMode] = useState('school'); // 'school' or 'name'
   const navigate = useNavigate();
 
   const handleSchoolSelect = (school) => {
@@ -21,6 +22,11 @@ function Home() {
     }
   };
 
+  const handleNameSearchClick = () => {
+    setSearchMode('name');
+    navigate('/search');
+  };
+
   return (
     <div className="home">
       <div className="container">
@@ -32,7 +38,7 @@ function Home() {
           
           <div className="search-flow">
             <div className="school-selection">
-              <label className="search-label">Step 1: Find Your School</label>
+              <label className="search-label">Enter your <strong>school</strong> to get started</label>
               <SchoolSearch
                 onSelectSchool={handleSchoolSelect}
                 selectedSchool={selectedSchool}
@@ -42,7 +48,7 @@ function Home() {
 
             {selectedSchool && (
               <div className="search-form">
-                <label className="search-label">Step 2: Search for an RA</label>
+                <label className="search-label">Search for an RA</label>
                 <RASearchAutocomplete
                   schoolId={selectedSchool.id}
                   selectedRA={selectedRA}
@@ -51,32 +57,43 @@ function Home() {
                 />
               </div>
             )}
+
+            <div className="alternative-search">
+              <button 
+                type="button" 
+                className="link-button"
+                onClick={handleNameSearchClick}
+              >
+                I'd like to look up an RA by name
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="features">
-          <div className="feature-card">
-            <h3>🔍 Find RAs</h3>
-            <p>Search for resident assistants at your school</p>
+        <div className="join-section">
+          <h2>Join the RateMyRA Family</h2>
+          <p className="join-subtitle">Love RateMyRA? Let's make it official.</p>
+          
+          <div className="benefits-grid">
+            <div className="benefit-card">
+              <div className="benefit-icon">✏️</div>
+              <h3>Manage and edit your ratings</h3>
+            </div>
+            <div className="benefit-card">
+              <div className="benefit-icon">🔒</div>
+              <h3>Your ratings are always anonymous</h3>
+            </div>
+            <div className="benefit-card">
+              <div className="benefit-icon">👍</div>
+              <h3>Like or dislike ratings</h3>
+            </div>
           </div>
-          <div className="feature-card">
-            <h3>⭐ Rate & Review</h3>
-            <p>Share your experience with helpful reviews</p>
+          
+          <div className="join-cta">
+            <Link to="/login" className="btn btn-primary btn-large">
+              Sign up now!
+            </Link>
           </div>
-          <div className="feature-card">
-            <h3>📊 See Stats</h3>
-            <p>View ratings, difficulty, and helpful tags</p>
-          </div>
-          <div className="feature-card">
-            <h3>➕ Add RAs</h3>
-            <p>Help grow the database by adding new RAs</p>
-          </div>
-        </div>
-
-        <div className="cta-section">
-          <Link to="/add-ra" className="btn btn-primary btn-large">
-            Add a New RA
-          </Link>
         </div>
       </div>
     </div>
