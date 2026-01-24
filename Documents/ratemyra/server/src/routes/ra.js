@@ -39,16 +39,18 @@ router.get('/trending', async (req, res, next) => {
     }
 
     // Get RAs with most reviews and highest ratings
-    // Use select to avoid issues if migration hasn't run yet
+    // Use include but only select review fields that definitely exist (migration may not have run yet)
     const ras = await prisma.rA.findMany({
       where,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        dorm: true,
-        floor: true,
-        school: true,
+      include: {
+        school: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            domain: true,
+          },
+        },
         reviews: {
           where: { status: 'ACTIVE' },
           select: {
@@ -60,7 +62,7 @@ router.get('/trending', async (req, res, next) => {
             wouldTakeAgain: true,
             tags: true,
             timestamp: true,
-            // Don't select new fields until migration runs
+            // Don't select userId, helpfulCount, notHelpfulCount - they may not exist until migration runs
           },
         },
       },
@@ -127,15 +129,10 @@ router.get('/:id', async (req, res, next) => {
       return res.json(cached);
     }
     
-    // Use select to avoid issues if migration hasn't run yet
+    // Use include but only select review fields that definitely exist (migration may not have run yet)
     const ra = await prisma.rA.findUnique({
       where: { id },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        dorm: true,
-        floor: true,
+      include: {
         school: true,
         reviews: {
           where: { status: 'ACTIVE' },
@@ -151,7 +148,7 @@ router.get('/:id', async (req, res, next) => {
             tags: true,
             textBody: true,
             timestamp: true,
-            // Don't select new fields until migration runs
+            // Don't select userId, helpfulCount, notHelpfulCount - they may not exist until migration runs
           },
         },
         tagStats: {

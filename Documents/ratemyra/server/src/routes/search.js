@@ -68,16 +68,18 @@ router.get('/', async (req, res, next) => {
     };
 
     // Fetch RAs
-    // Use select to only get fields that exist (migration may not have run yet)
+    // Use include but only select review fields that definitely exist (migration may not have run yet)
     const ras = await prisma.rA.findMany({
       where,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        dorm: true,
-        floor: true,
-        school: true,
+      include: {
+        school: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            domain: true,
+          },
+        },
         reviews: {
           where: { status: 'ACTIVE' },
           select: {
