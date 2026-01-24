@@ -52,17 +52,16 @@ function SubmitReview() {
   };
 
   // Generate semester options (last 4 years, current year, up to Spring 2026)
+  // Future semesters are automatically added as time progresses
   const generateSemesterOptions = () => {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth(); // 0-11
-    const currentDay = currentDate.getDate();
     const semesters = [];
     const seasons = ['Fall', 'Spring', 'Summer'];
-    const maxYear = 2026; // Cap at 2026
-    const maxSemester = 'Spring 2026'; // Don't go beyond Spring 2026
+    const maxYear = 2026; // Hard cap at 2026
     
-    // Generate semesters for previous 4 years, current year, and future up to maxSemester
+    // Generate semesters for previous 4 years, current year, and future up to maxYear
     for (let yearOffset = -4; yearOffset <= 2; yearOffset++) {
       const year = currentYear + yearOffset;
       
@@ -72,8 +71,7 @@ function SubmitReview() {
       for (const season of seasons) {
         const semesterStr = `${season} ${year}`;
         
-        // Don't go beyond Spring 2026
-        if (semesterStr === 'Summer 2026' || semesterStr === 'Fall 2026') continue;
+        // Hard cap: Don't go beyond Spring 2026
         if (year === 2026 && season !== 'Spring') continue;
         
         // For current year, only show past and current semesters
@@ -92,7 +90,8 @@ function SubmitReview() {
         }
         
         // For future years (up to maxYear), show all semesters
-        // These will automatically appear as time progresses
+        // These will automatically appear as time progresses - no need to schedule specific dates
+        // The system will naturally show them as the current date advances
         if (yearOffset > 0 && year <= maxYear) {
           semesters.push(semesterStr);
         }
