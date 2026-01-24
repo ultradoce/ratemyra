@@ -6,6 +6,7 @@ import { calculateOverallRating } from '../utils/rating.js';
 import { hashIP, hashDeviceFingerprint, getClientIP, detectSimilarReviews } from '../utils/abusePrevention.js';
 import { validateTags, updateTagStats, TAG_DISPLAY_NAMES } from '../utils/tags.js';
 import { deleteCache, cacheKeys, getCache, setCache } from '../utils/cache.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -200,10 +201,14 @@ router.post(
       // Validate and clean tags
       const validTags = validateTags(tags);
 
+      // Get userId if user is authenticated (optional - reviews can be anonymous)
+      const userId = req.user?.id || null;
+
       // Create review
       const review = await prisma.review.create({
         data: {
           raId,
+          userId, // Link to user if logged in (allows editing later)
           courseCode,
           ratingClarity,
           ratingHelpfulness,
@@ -282,6 +287,9 @@ router.get('/:raId', async (req, res, next) => {
           difficulty: true,
           wouldTakeAgain: true,
           tags: true,
+          helpfulCount: true,
+          notHelpfulCount: true,
+          userId: true,
           attendanceRequired: true,
           textBody: true,
           timestamp: true,
@@ -350,6 +358,229 @@ router.post('/:id/flag', async (req, res, next) => {
     console.log(`Review ${id} flagged. Reason: ${reason || 'Not specified'}`);
 
     res.json({ message: 'Review flagged for moderation' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/reviews/:id/like
+ * Like or dislike a review (helpful/not helpful)
+ */
+router.post('/:id/like', async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { id } = req.params;
+    const { isHelpful } = req.body; // true = helpful, false = not helpful
+
+    if (typeof isHelpful !== 'boolean') {
+      return res.status(400).json({ error: 'isHelpful must be a boolean' });
+    }
+
+    // Get user info if authenticated (optional)
+    const userId = req.user?.id || null;
+    
+    // Get IP and device fingerprint for anonymous users
+    const clientIP = getClientIP(req);
+    const ipHash = hashIP(clientIP);
+    const deviceFingerprintHash = req.body.deviceFingerprint 
+      ? hashDeviceFingerprint(req.body.deviceFingerprint, req)
+      : null;
+
+    // Check if user already voted on this review
+    const existingLike = await prisma.reviewLike.findFirst({
+      where: userId
+        ? { reviewId: id, userId }
+        : { reviewId: id, ipHash, deviceFingerprintHash },
+    });
+
+    const review = await prisma.review.findUnique({
+      where: { id },
+      select: { helpfulCount: true, notHelpfulCount: true },
+    });
+
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    if (existingLike) {
+      // User already voted - update their vote
+      if (existingLike.isHelpful === isHelpful) {
+        // Same vote - remove it
+        await prisma.reviewLike.delete({ where: { id: existingLike.id } });
+        
+        // Update counts
+        await prisma.review.update({
+          where: { id },
+          data: {
+            helpfulCount: isHelpful 
+              ? Math.max(0, review.helpfulCount - 1)
+              : review.helpfulCount,
+            notHelpfulCount: !isHelpful
+              ? Math.max(0, review.notHelpfulCount - 1)
+              : review.notHelpfulCount,
+          },
+        });
+      } else {
+        // Different vote - update it
+        await prisma.reviewLike.update({
+          where: { id: existingLike.id },
+          data: { isHelpful },
+        });
+
+        // Update counts
+        await prisma.review.update({
+          where: { id },
+          data: {
+            helpfulCount: isHelpful 
+              ? review.helpfulCount + 1
+              : Math.max(0, review.helpfulCount - 1),
+            notHelpfulCount: !isHelpful
+              ? review.notHelpfulCount + 1
+              : Math.max(0, review.notHelpfulCount - 1),
+          },
+        });
+      }
+    } else {
+      // New vote
+      await prisma.reviewLike.create({
+        data: {
+          reviewId: id,
+          userId,
+          ipHash,
+          deviceFingerprintHash,
+          isHelpful,
+        },
+      });
+
+      // Update counts
+      await prisma.review.update({
+        where: { id },
+        data: {
+          helpfulCount: isHelpful ? review.helpfulCount + 1 : review.helpfulCount,
+          notHelpfulCount: !isHelpful ? review.notHelpfulCount + 1 : review.notHelpfulCount,
+        },
+      });
+    }
+
+    // Invalidate cache
+    const updatedReview = await prisma.review.findUnique({
+      where: { id },
+      select: { raId: true },
+    });
+    if (updatedReview) {
+      await deleteCache(cacheKeys.ra(updatedReview.raId));
+      await deleteCache(cacheKeys.raReviews(updatedReview.raId));
+    }
+
+    res.json({ message: 'Vote recorded successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * PATCH /api/reviews/:id
+ * Update a review (only if user owns it)
+ */
+router.patch('/:id', authenticateToken, [
+  body('ratingClarity').optional().isInt({ min: 1, max: 5 }),
+  body('ratingHelpfulness').optional().isInt({ min: 1, max: 5 }),
+  body('difficulty').optional().isInt({ min: 1, max: 5 }),
+  body('tags').optional().isArray(),
+  body('textBody').optional().isString().isLength({ max: 2000 }),
+  body('wouldTakeAgain').optional().isBoolean(),
+], async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Check if review exists and belongs to user
+    const review = await prisma.review.findUnique({
+      where: { id },
+      select: { userId: true, raId: true },
+    });
+
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    if (review.userId !== userId) {
+      return res.status(403).json({ error: 'You can only edit your own reviews' });
+    }
+
+    // Prepare update data
+    const updateData = {};
+    if (req.body.ratingClarity !== undefined) updateData.ratingClarity = req.body.ratingClarity;
+    if (req.body.ratingHelpfulness !== undefined) updateData.ratingHelpfulness = req.body.ratingHelpfulness;
+    if (req.body.difficulty !== undefined) updateData.difficulty = req.body.difficulty;
+    if (req.body.textBody !== undefined) updateData.textBody = req.body.textBody;
+    if (req.body.wouldTakeAgain !== undefined) updateData.wouldTakeAgain = req.body.wouldTakeAgain;
+    
+    if (req.body.tags !== undefined) {
+      updateData.tags = validateTags(req.body.tags);
+    }
+
+    // Recalculate overall rating if clarity or helpfulness changed
+    if (updateData.ratingClarity !== undefined || updateData.ratingHelpfulness !== undefined) {
+      const currentReview = await prisma.review.findUnique({ where: { id } });
+      const clarity = updateData.ratingClarity ?? currentReview.ratingClarity;
+      const helpfulness = updateData.ratingHelpfulness ?? currentReview.ratingHelpfulness;
+      updateData.ratingOverall = calculateOverallRating(clarity, helpfulness);
+    }
+
+    // Update review
+    const updatedReview = await prisma.review.update({
+      where: { id },
+      data: updateData,
+    });
+
+    // Update tag stats if tags changed
+    if (updateData.tags !== undefined) {
+      // Recalculate tag stats (this is simplified - in production you'd want to be more efficient)
+      const allReviews = await prisma.review.findMany({
+        where: { raId: review.raId, status: 'ACTIVE' },
+        select: { tags: true },
+      });
+      
+      // Rebuild tag stats
+      const tagCounts = {};
+      allReviews.forEach(r => {
+        r.tags.forEach(tag => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      });
+
+      // Update tag stats
+      for (const [tag, count] of Object.entries(tagCounts)) {
+        await prisma.rATagStat.upsert({
+          where: { raId_tag: { raId: review.raId, tag } },
+          update: { count },
+          create: { raId: review.raId, tag, count },
+        });
+      }
+    }
+
+    // Invalidate cache
+    await deleteCache(cacheKeys.ra(review.raId));
+    await deleteCache(cacheKeys.raReviews(review.raId));
+
+    res.json({
+      review: updatedReview,
+      message: 'Review updated successfully',
+    });
   } catch (error) {
     next(error);
   }
