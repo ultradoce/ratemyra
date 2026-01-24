@@ -19,6 +19,7 @@ function RASearch() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showSchoolSelector, setShowSchoolSelector] = useState(false);
 
   // Fetch school details if schoolId is in URL
   useEffect(() => {
@@ -119,19 +120,19 @@ function RASearch() {
         <h1>Search RAs</h1>
         
         <div className="search-flow">
-          <div className="school-selection">
-            {!selectedSchool && (
-              <label className="search-label">Select School (optional)</label>
-            )}
-            <SchoolSearch
-              onSelectSchool={handleSchoolSelect}
-              selectedSchool={selectedSchool}
-              placeholder={selectedSchool 
-                ? selectedSchool.name 
-                : "Enter your school to filter results (optional)"
-              }
-            />
-          </div>
+          {(selectedSchool || showSchoolSelector) && (
+            <div className="school-selection">
+              <label className="search-label">Select School</label>
+              <SchoolSearch
+                onSelectSchool={handleSchoolSelect}
+                selectedSchool={selectedSchool}
+                placeholder={selectedSchool 
+                  ? selectedSchool.name 
+                  : "Enter your school to filter results"
+                }
+              />
+            </div>
+          )}
 
           <div className="search-form">
             <label className="search-label">Search for an RA</label>
@@ -145,6 +146,18 @@ function RASearch() {
               }
             />
           </div>
+
+          {!selectedSchool && !showSchoolSelector && (
+            <div className="alternative-search">
+              <button 
+                type="button"
+                className="link-button"
+                onClick={() => setShowSchoolSelector(true)}
+              >
+                + Filter by school (optional)
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="add-ra-cta">
