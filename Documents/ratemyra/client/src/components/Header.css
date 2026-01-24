@@ -126,37 +126,37 @@ nav .link-button:hover {
   }
 
   /* Animate hamburger to X when open */
-  .mobile-menu-toggle span:nth-child(1) {
-    transform: rotate(0deg);
-  }
-
-  .mobile-menu-toggle span:nth-child(2) {
-    opacity: 1;
-  }
-
-  .mobile-menu-toggle span:nth-child(3) {
-    transform: rotate(0deg);
-  }
-
-  nav.mobile-open ~ .mobile-menu-toggle span:nth-child(1),
   .header-content:has(nav.mobile-open) .mobile-menu-toggle span:nth-child(1) {
     transform: rotate(45deg) translate(8px, 8px);
   }
 
-  nav.mobile-open ~ .mobile-menu-toggle span:nth-child(2),
   .header-content:has(nav.mobile-open) .mobile-menu-toggle span:nth-child(2) {
     opacity: 0;
   }
 
-  nav.mobile-open ~ .mobile-menu-toggle span:nth-child(3),
   .header-content:has(nav.mobile-open) .mobile-menu-toggle span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+  }
+}
+
+/* Fallback for browsers without :has() support */
+@media (max-width: 768px) {
+  .mobile-menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+  }
+
+  .mobile-menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .mobile-menu-toggle.active span:nth-child(3) {
     transform: rotate(-45deg) translate(7px, -7px);
   }
 }
 
 /* Overlay when menu is open */
 @media (max-width: 768px) {
-  nav.mobile-open::before {
+  .header-content::after {
     content: '';
     position: fixed;
     top: 0;
@@ -164,6 +164,14 @@ nav .link-button:hover {
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.5);
-    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 99;
+  }
+
+  .header-content:has(nav.mobile-open)::after {
+    opacity: 1;
+    pointer-events: all;
   }
 }

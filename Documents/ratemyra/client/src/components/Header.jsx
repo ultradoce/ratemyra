@@ -20,7 +20,7 @@ function Header() {
             <h1>RateMyRA</h1>
           </Link>
           <button 
-            className="mobile-menu-toggle"
+            className={`mobile-menu-toggle ${mobileMenuOpen ? 'active' : ''}`}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
