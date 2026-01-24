@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -6,6 +6,8 @@ import StarRating from '../components/StarRating';
 import EmptyState from '../components/EmptyState';
 import { useAuth } from '../context/AuthContext';
 import { collectDeviceFingerprint } from '../utils/deviceFingerprint';
+import { useToast } from '../hooks/useToast';
+import { usePageMeta } from '../components/PageMeta';
 import './RADetail.css';
 
 function RADetail() {
@@ -20,10 +22,19 @@ function RADetail() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
   const [votingReviews, setVotingReviews] = useState(new Set());
+  const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'mostHelpful', 'highestRating', 'lowestRating'
+  const { success: showSuccess, error: showError, ToastContainer } = useToast();
 
   useEffect(() => {
     fetchRAData();
   }, [id]);
+
+  // Update page meta tags for SEO
+  usePageMeta(
+    ra ? `${ra.firstName} ${ra.lastName} - RA Reviews` : 'RA Profile',
+    ra ? `Read reviews and ratings for ${ra.firstName} ${ra.lastName} at ${ra.school?.name || 'their school'}. ${ra.totalReviews} student reviews.` : 'View RA profile and reviews',
+    'https://ratemyra.com/favicon.png'
+  );
 
   const fetchRAData = async () => {
     try {
@@ -88,8 +99,10 @@ function RADetail() {
       
       // Refresh reviews to get updated counts
       fetchReviews(page);
+      showSuccess('Thank you for your feedback!');
     } catch (err) {
       console.error('Failed to vote on review:', err);
+      showError('Failed to submit vote. Please try again.');
     } finally {
       setVotingReviews(prev => {
         const newSet = new Set(prev);
@@ -102,6 +115,46 @@ function RADetail() {
   const handleEditReview = (reviewId) => {
     navigate(`/review/${reviewId}/edit`);
   };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      showSuccess('Link copied to clipboard!');
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showSuccess('Link copied to clipboard!');
+      } catch (e) {
+        showError('Failed to copy link. Please copy manually.');
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  // Sort reviews based on selected option
+  const sortedReviews = useMemo(() => {
+    const reviewsCopy = [...reviews];
+    switch (sortBy) {
+      case 'newest':
+        return reviewsCopy.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      case 'oldest':
+        return reviewsCopy.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      case 'mostHelpful':
+        return reviewsCopy.sort((a, b) => (b.helpfulCount || 0) - (a.helpfulCount || 0));
+      case 'highestRating':
+        return reviewsCopy.sort((a, b) => (b.ratingOverall || b.ratingClarity || 0) - (a.ratingOverall || a.ratingClarity || 0));
+      case 'lowestRating':
+        return reviewsCopy.sort((a, b) => (a.ratingOverall || a.ratingClarity || 0) - (b.ratingOverall || b.ratingClarity || 0));
+      default:
+        return reviewsCopy;
+    }
+  }, [reviews, sortBy]);
 
   if (loading) {
     return (
@@ -242,9 +295,14 @@ function RADetail() {
             <div className="action-content">
               <h3>Share Your Experience</h3>
               <p>Help other students by writing a review for this RA</p>
-              <Link to={`/ra/${id}/review`} className="btn btn-primary btn-large">
-                Write a Review
-              </Link>
+              <div className="action-buttons">
+                <Link to={`/ra/${id}/review`} className="btn btn-primary btn-large">
+                  Write a Review
+                </Link>
+                <button onClick={handleShare} className="btn btn-outline btn-large">
+                  📋 Share Profile
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -252,8 +310,27 @@ function RADetail() {
         {/* Reviews Section */}
         <div className="reviews-section">
           <div className="reviews-header">
-            <h2>Student Reviews</h2>
-            <div className="reviews-count">{ra.totalReviews} {ra.totalReviews === 1 ? 'Review' : 'Reviews'}</div>
+            <div className="reviews-header-left">
+              <h2>Student Reviews</h2>
+              <div className="reviews-count">{ra.totalReviews} {ra.totalReviews === 1 ? 'Review' : 'Reviews'}</div>
+            </div>
+            {reviews.length > 0 && (
+              <div className="reviews-sort">
+                <label htmlFor="sort-select">Sort by:</label>
+                <select
+                  id="sort-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="sort-select"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="mostHelpful">Most Helpful</option>
+                  <option value="highestRating">Highest Rating</option>
+                  <option value="lowestRating">Lowest Rating</option>
+                </select>
+              </div>
+            )}
           </div>
           
           {reviews.length === 0 && !reviewsLoading ? (
@@ -269,7 +346,7 @@ function RADetail() {
             />
           ) : (
             <>
-              {reviews.map((review) => (
+              {sortedReviews.map((review) => (
                 <div key={review.id} className="review-card card fade-in">
                   <div className="review-card-header">
                     <div className="review-meta-left">
@@ -377,6 +454,7 @@ function RADetail() {
           )}
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }
