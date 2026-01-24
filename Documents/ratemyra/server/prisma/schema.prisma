@@ -66,6 +66,8 @@ model Review {
   
   @@index([raId, status])
   @@index([ipHash])
+  @@index([deviceFingerprintHash])
+  @@index([ipHash, deviceFingerprintHash])
   @@index([timestamp])
   @@index([status])
 }

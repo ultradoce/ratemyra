@@ -69,10 +69,10 @@ router.post(
       // Abuse prevention
       const clientIP = getClientIP(req);
       const ipHash = hashIP(clientIP);
-      const deviceFingerprintHash = hashDeviceFingerprint(req);
+      const deviceFingerprintHash = hashDeviceFingerprint(req, req.body);
 
-      // Check for recent reviews from same IP/device
-      const recentReviews = await prisma.review.findMany({
+      // Check for recent reviews from same IP for this RA (24 hours)
+      const recentReviewsByIP = await prisma.review.findMany({
         where: {
           ipHash,
           raId,
@@ -82,10 +82,99 @@ router.post(
         },
       });
 
-      if (recentReviews.length > 0) {
+      if (recentReviewsByIP.length > 0) {
         return res.status(429).json({
-          error: 'You have already submitted a review for this RA recently.',
+          error: 'You have already submitted a review for this RA recently. Please wait 24 hours before submitting another review.',
         });
+      }
+
+      // Check for recent reviews from same device fingerprint for this RA (24 hours)
+      if (deviceFingerprintHash) {
+        const recentReviewsByDevice = await prisma.review.findMany({
+          where: {
+            deviceFingerprintHash,
+            raId,
+            timestamp: {
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+            },
+          },
+        });
+
+        if (recentReviewsByDevice.length > 0) {
+          return res.status(429).json({
+            error: 'You have already submitted a review for this RA recently. Please wait 24 hours before submitting another review.',
+          });
+        }
+      }
+
+      // Check for any reviews from same IP + device combination for this RA (7 days)
+      if (deviceFingerprintHash) {
+        const recentReviewsByIPAndDevice = await prisma.review.findMany({
+          where: {
+            ipHash,
+            deviceFingerprintHash,
+            raId,
+            timestamp: {
+              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+            },
+          },
+        });
+
+        if (recentReviewsByIPAndDevice.length > 0) {
+          return res.status(429).json({
+            error: 'You have already submitted a review for this RA. Each device can only submit one review per RA.',
+          });
+        }
+      }
+
+      // Check for excessive reviews from same IP across all RAs (prevent spam)
+      const totalRecentReviewsByIP = await prisma.review.count({
+        where: {
+          ipHash,
+          timestamp: {
+            gte: new Date(Date.now() - 60 * 60 * 1000), // Last 1 hour
+          },
+        },
+      });
+
+      if (totalRecentReviewsByIP >= 5) {
+        return res.status(429).json({
+          error: 'Too many reviews submitted from this location. Please try again later.',
+        });
+      }
+
+      // Check for excessive reviews from same device across all RAs (prevent spam)
+      if (deviceFingerprintHash) {
+        const totalRecentReviewsByDevice = await prisma.review.count({
+          where: {
+            deviceFingerprintHash,
+            timestamp: {
+              gte: new Date(Date.now() - 60 * 60 * 1000), // Last 1 hour
+            },
+          },
+        });
+
+        if (totalRecentReviewsByDevice >= 5) {
+          return res.status(429).json({
+            error: 'Too many reviews submitted from this device. Please try again later.',
+          });
+        }
+
+        // Check for reviews from same device across all RAs in last 24 hours
+        const totalDailyReviewsByDevice = await prisma.review.count({
+          where: {
+            deviceFingerprintHash,
+            timestamp: {
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+            },
+          },
+        });
+
+        if (totalDailyReviewsByDevice >= 20) {
+          return res.status(429).json({
+            error: 'Daily review limit reached. Please try again tomorrow.',
+          });
+        }
       }
 
       // Check for similar reviews (duplicate detection)

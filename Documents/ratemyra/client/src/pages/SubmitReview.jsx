@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { collectDeviceFingerprint } from '../utils/deviceFingerprint';
 import './SubmitReview.css';
 
 const REVIEW_TAGS = {
@@ -75,9 +76,13 @@ function SubmitReview() {
     setError(null);
 
     try {
+      // Collect device fingerprint for abuse prevention
+      const deviceFingerprint = collectDeviceFingerprint();
+      
       await axios.post('/api/reviews', {
         raId: id,
         ...formData,
+        ...deviceFingerprint, // Include device fingerprint data
       });
       setSuccess(true);
       setTimeout(() => {

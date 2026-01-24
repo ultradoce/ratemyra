@@ -12,16 +12,47 @@ export function hashIP(ip) {
 /**
  * Generate device fingerprint hash
  * @param {Object} req - Express request object
+ * @param {Object} body - Request body (may contain client-side fingerprint data)
  * @returns {string} - Hash of device fingerprint
  */
-export function hashDeviceFingerprint(req) {
-  const fingerprint = [
+export function hashDeviceFingerprint(req, body = {}) {
+  // Server-side fingerprint components
+  const serverFingerprint = [
     req.headers['user-agent'],
     req.headers['accept-language'],
     req.headers['accept-encoding'],
+    req.headers['accept'],
+    req.headers['dnt'], // Do Not Track header
+    req.headers['sec-ch-ua'], // Client hints
+    req.headers['sec-ch-ua-platform'],
+    req.headers['sec-ch-ua-mobile'],
   ].filter(Boolean).join('|');
+
+  // Client-side fingerprint components (sent from frontend)
+  const clientFingerprint = [
+    body.screenWidth,
+    body.screenHeight,
+    body.timezone,
+    body.timezoneOffset,
+    body.platform,
+    body.language,
+    body.hardwareConcurrency,
+    body.deviceMemory,
+  ].filter(Boolean).join('|');
+
+  // Combine server and client fingerprints
+  const fullFingerprint = [serverFingerprint, clientFingerprint].filter(Boolean).join('||');
   
-  return crypto.createHash('sha256').update(fingerprint).digest('hex');
+  // If no fingerprint data, use a minimal hash based on headers only
+  if (!fullFingerprint) {
+    const minimal = [
+      req.headers['user-agent'],
+      req.headers['accept-language'],
+    ].filter(Boolean).join('|');
+    return crypto.createHash('sha256').update(minimal || 'unknown').digest('hex');
+  }
+  
+  return crypto.createHash('sha256').update(fullFingerprint).digest('hex');
 }
 
 /**
