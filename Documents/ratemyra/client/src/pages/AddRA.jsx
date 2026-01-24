@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
+import SchoolSearch from '../components/SchoolSearch';
 import './AddRA.css';
 
 function AddRA() {
   const navigate = useNavigate();
-  const [schools, setSchools] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedSchool, setSelectedSchool] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [potentialDuplicates, setPotentialDuplicates] = useState(null);
@@ -20,20 +20,15 @@ function AddRA() {
     floor: '',
   });
 
-  useEffect(() => {
-    fetchSchools();
-  }, []);
-
-  const fetchSchools = async () => {
-    try {
-      const response = await axios.get('/api/schools');
-      setSchools(response.data);
-    } catch (err) {
-      setError('Failed to load schools. Please try again.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const handleSchoolSelect = (school) => {
+    setSelectedSchool(school);
+    setFormData(prev => ({
+      ...prev,
+      schoolId: school ? school.id : '',
+    }));
+    // Clear errors when school is selected
+    if (error) setError(null);
+    if (potentialDuplicates) setPotentialDuplicates(null);
   };
 
   const handleChange = (e) => {
@@ -111,14 +106,6 @@ function AddRA() {
     navigate(`/ra/${duplicateId}`);
   };
 
-  if (loading) {
-    return (
-      <div className="container">
-        <LoadingSpinner fullScreen size="large" />
-      </div>
-    );
-  }
-
   return (
     <div className="add-ra">
       <div className="container">
@@ -173,21 +160,16 @@ function AddRA() {
             <label htmlFor="schoolId">
               School <span className="required">*</span>
             </label>
-            <select
-              id="schoolId"
-              name="schoolId"
-              value={formData.schoolId}
-              onChange={handleChange}
-              className="input"
-              required
-            >
-              <option value="">Select a school...</option>
-              {schools.map((school) => (
-                <option key={school.id} value={school.id}>
-                  {school.name}
-                </option>
-              ))}
-            </select>
+            <SchoolSearch
+              onSelectSchool={handleSchoolSelect}
+              selectedSchool={selectedSchool}
+              placeholder="Search for your school..."
+            />
+            {!selectedSchool && formData.schoolId && (
+              <p className="form-hint" style={{ color: 'var(--danger)', fontSize: '14px', marginTop: '8px' }}>
+                Please select a school from the search results
+              </p>
+            )}
           </div>
 
           <div className="form-row">
