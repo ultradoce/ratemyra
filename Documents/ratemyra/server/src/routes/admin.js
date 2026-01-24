@@ -86,6 +86,10 @@ router.get('/dashboard', async (req, res, next) => {
  */
 router.get('/reviews', async (req, res, next) => {
   try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
     const { page = 1, limit = 50, status, raId } = req.query;
 
     const pageNum = Math.max(1, parseInt(page));
