@@ -18,16 +18,27 @@
   text-decoration: none;
   color: white;
   transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .logo:hover {
   opacity: 0.9;
 }
 
+.logo-image {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .logo h1 {
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.5px;
+  margin: 0;
 }
 
 nav {
@@ -80,6 +91,11 @@ nav .link-button:hover {
 @media (max-width: 768px) {
   .header {
     padding: 16px 0;
+  }
+
+  .logo-image {
+    width: 32px;
+    height: 32px;
   }
 
   .logo h1 {

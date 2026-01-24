@@ -42,6 +42,7 @@ function Header() {
       <div className="container">
         <div className="header-content">
           <Link to="/" className="logo" onClick={() => setMobileMenuOpen(false)}>
+            <img src="/favicon-64x64.png" alt="RateMyRA Logo" className="logo-image" />
             <h1>RateMyRA</h1>
           </Link>
           <button 
