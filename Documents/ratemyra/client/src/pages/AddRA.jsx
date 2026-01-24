@@ -268,7 +268,7 @@ function AddRA() {
           <ul>
             <li>Make sure the RA doesn't already exist before adding</li>
             <li>Use the exact name as it appears (first and last name)</li>
-            <li>Dorm and floor information helps other students find the right RA</li>
+            <li>Dorm and floor information helps identify the correct RA profile</li>
             <li>You can always add more details later by writing a review</li>
           </ul>
         </div>

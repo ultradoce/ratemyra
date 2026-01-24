@@ -33,7 +33,7 @@ function Home() {
         <div className="hero">
           <h1>Rate Your Resident Assistant</h1>
           <p className="subtitle">
-            Share your experience and help other students find the best RAs
+            Share your honest feedback and help other students by leaving reviews about your RA
           </p>
           
           <div className="search-flow">
@@ -47,12 +47,12 @@ function Home() {
 
             {selectedSchool && (
               <div className="search-form">
-                <label className="search-label">Search for an RA</label>
+                <label className="search-label">Look up an RA</label>
                 <RASearchAutocomplete
                   schoolId={selectedSchool.id}
                   selectedRA={selectedRA}
                   onSelectRA={handleRASelect}
-                  placeholder={`Search for an RA at ${selectedSchool.name}...`}
+                  placeholder={`Look up an RA at ${selectedSchool.name}...`}
                 />
               </div>
             )}

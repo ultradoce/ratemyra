@@ -13,10 +13,10 @@ function Help() {
             <p>Welcome to RateMyRA! Here's how to get started:</p>
             <ol>
               <li><strong>Search for a School:</strong> Start by selecting your college or university from the search box on the homepage.</li>
-              <li><strong>Find an RA:</strong> Once you've selected a school, search for Resident Assistants by name.</li>
-              <li><strong>Read Reviews:</strong> View ratings and reviews from other students who have interacted with RAs.</li>
-              <li><strong>Add an RA:</strong> If you don't see an RA listed, you can add them to the database.</li>
-              <li><strong>Write a Review:</strong> Share your experience by writing a review for an RA.</li>
+              <li><strong>Look Up an RA:</strong> Once you've selected a school, search for your Resident Assistant by name.</li>
+              <li><strong>Read Reviews:</strong> View honest ratings and reviews from other students who have had the same RA.</li>
+              <li><strong>Add an RA:</strong> If your RA isn't listed yet, you can add their profile to the database.</li>
+              <li><strong>Write a Review:</strong> Share your honest feedback by writing a review about your experience with the RA.</li>
             </ol>
           </section>
 
@@ -24,8 +24,8 @@ function Help() {
             <h2>Frequently Asked Questions</h2>
             
             <div className="faq-item">
-              <h3>How do I search for an RA?</h3>
-              <p>First, select your school from the dropdown. Then, type the RA's name in the search box. You can search by first name, last name, or both.</p>
+              <h3>How do I look up an RA?</h3>
+              <p>First, select your school from the dropdown. Then, type your RA's name in the search box. You can search by first name, last name, or both.</p>
             </div>
 
             <div className="faq-item">

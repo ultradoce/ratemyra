@@ -117,7 +117,7 @@ function RASearch() {
   return (
     <div className="ra-search">
       <div className="container">
-        <h1>Search RAs</h1>
+        <h1>Look Up an RA</h1>
         
         <div className="search-flow">
           {(selectedSchool || showSchoolSelector) && (
@@ -135,14 +135,14 @@ function RASearch() {
           )}
 
           <div className="search-form">
-            <label className="search-label">Search for an RA</label>
+            <label className="search-label">Look up an RA</label>
             <RASearchAutocomplete
               schoolId={selectedSchool?.id || null}
               selectedRA={selectedRA}
               onSelectRA={handleRASelect}
               placeholder={selectedSchool 
-                ? `Search by name or dorm at ${selectedSchool.name}...`
-                : "Search for an RA by name (across all schools)..."
+                ? `Look up an RA by name or dorm at ${selectedSchool.name}...`
+                : "Look up an RA by name (across all schools)..."
               }
             />
           </div>
@@ -161,9 +161,9 @@ function RASearch() {
         </div>
 
         <div className="add-ra-cta">
-          <p>Can't find the RA you're looking for?</p>
+          <p>RA not listed yet?</p>
           <Link to="/add-ra" className="btn btn-outline">
-            Add a New RA
+            Add a New RA Profile
           </Link>
         </div>
 
