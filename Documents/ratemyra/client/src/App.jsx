@@ -15,6 +15,7 @@ import Guidelines from './pages/Guidelines';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import VerifyEmail from './pages/VerifyEmail';
+import EditReview from './pages/EditReview';
 import './App.css';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Route path="/add-ra" element={<AddRA />} />
             <Route path="/ra/:id" element={<RADetail />} />
             <Route path="/ra/:id/review" element={<SubmitReview />} />
+            <Route path="/review/:id/edit" element={<EditReview />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/help" element={<Help />} />

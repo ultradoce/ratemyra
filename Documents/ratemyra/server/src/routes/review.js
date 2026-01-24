@@ -244,6 +244,44 @@ router.post(
 );
 
 /**
+ * GET /api/reviews/single/:id
+ * Get a single review by ID
+ */
+router.get('/single/:id', authenticateToken, async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const review = await prisma.review.findUnique({
+      where: { id },
+      include: {
+        ra: {
+          include: {
+            school: true,
+          },
+        },
+      },
+    });
+
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    if (review.userId !== userId) {
+      return res.status(403).json({ error: 'You can only view your own reviews' });
+    }
+
+    res.json({ review });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/reviews/:raId
  * Get reviews for a specific RA
  */
