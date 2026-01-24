@@ -75,7 +75,7 @@ function Guidelines() {
 
           <section>
             <h2>Questions?</h2>
-            <p>If you have questions about these guidelines or need to report a violation, please contact the site administrators through the admin portal.</p>
+            <p>If you have questions about these guidelines or need to report a violation, please contact our support team.</p>
           </section>
         </div>
       </div>

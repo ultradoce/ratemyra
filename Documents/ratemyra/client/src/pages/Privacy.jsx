@@ -19,7 +19,7 @@ function Privacy() {
             
             <h3>Information You Provide</h3>
             <ul>
-              <li><strong>Account Information:</strong> Email address, password (hashed), and role (user/admin)</li>
+              <li><strong>Account Information:</strong> Email address and password (hashed)</li>
               <li><strong>Content:</strong> Reviews, ratings, and comments you submit</li>
               <li><strong>RA Information:</strong> Names and details of Resident Assistants you add</li>
             </ul>
@@ -77,7 +77,7 @@ function Privacy() {
               <li>Request deletion of your account and data</li>
               <li>Opt-out of certain data collection (where applicable)</li>
             </ul>
-            <p>To exercise these rights, please contact us through the admin portal.</p>
+            <p>To exercise these rights, please contact our support team.</p>
           </section>
 
           <section>
@@ -118,7 +118,7 @@ function Privacy() {
 
           <section>
             <h2>13. Contact Us</h2>
-            <p>If you have any questions about this Privacy Policy or our data practices, please contact us through the admin portal.</p>
+            <p>If you have any questions about this Privacy Policy or our data practices, please contact our support team.</p>
           </section>
         </div>
       </div>

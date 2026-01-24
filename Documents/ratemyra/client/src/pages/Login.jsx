@@ -5,8 +5,7 @@ import './Login.css';
 
 function Login() {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -28,11 +27,11 @@ function Login() {
     setLoading(true);
     setError(null);
 
-    const result = isLogin
-      ? await login(formData.email, formData.password)
-      : await register(formData.email, formData.password);
+    const result = await login(formData.email, formData.password);
 
     if (result.success) {
+      // Only admins can access admin dashboard
+      // Regular users will be redirected by AdminDashboard component
       navigate('/admin');
     } else {
       setError(result.error);
@@ -44,11 +43,9 @@ function Login() {
     <div className="login-page">
       <div className="login-container">
         <div className="login-card card">
-          <h1>{isLogin ? 'Admin Login' : 'Register'}</h1>
+          <h1>Admin Login</h1>
           <p className="login-subtitle">
-            {isLogin
-              ? 'Sign in to access the admin dashboard'
-              : 'Create an account to access admin features'}
+            Sign in to access the admin dashboard
           </p>
 
           {error && (
@@ -65,7 +62,7 @@ function Login() {
                 value={formData.email}
                 onChange={handleChange}
                 className="input"
-                placeholder="admin@example.com"
+                placeholder="your@email.com"
                 required
               />
             </div>
@@ -93,28 +90,14 @@ function Login() {
               {loading ? (
                 <>
                   <span className="loading-spinner"></span>
-                  {isLogin ? 'Logging in...' : 'Registering...'}
+                  Logging in...
                 </>
               ) : (
-                isLogin ? 'Login' : 'Register'
+                'Login'
               )}
             </button>
           </form>
 
-          <div className="login-switch">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-              }}
-              className="link-button"
-            >
-              {isLogin
-                ? "Don't have an account? Register"
-                : 'Already have an account? Login'}
-            </button>
-          </div>
 
           <div className="login-footer">
             <Link to="/" className="link-button">

@@ -56,7 +56,7 @@ function Help() {
 
           <section>
             <h2>Contact Support</h2>
-            <p>If you need additional help or have questions not covered here, please refer to our <a href="/guidelines">Site Guidelines</a> or contact our support team through the admin portal.</p>
+            <p>If you need additional help or have questions not covered here, please refer to our <a href="/guidelines">Site Guidelines</a> or contact our support team.</p>
           </section>
         </div>
       </div>

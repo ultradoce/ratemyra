@@ -93,7 +93,7 @@ function Terms() {
 
           <section>
             <h2>12. Contact Information</h2>
-            <p>If you have any questions about these Terms & Conditions, please contact us through the admin portal.</p>
+            <p>If you have any questions about these Terms & Conditions, please contact our support team.</p>
           </section>
         </div>
       </div>
