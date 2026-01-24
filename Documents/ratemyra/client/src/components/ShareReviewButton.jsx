@@ -52,70 +52,234 @@ function ShareReviewButton({ review, ra }) {
     try {
       // Dynamically import html-to-image
       const htmlToImage = await import('html-to-image');
-      const reviewCard = document.querySelector(`[data-review-id="${review.id}"]`);
       
-      if (!reviewCard) {
-        showError('Could not find review to generate image.');
-        return;
-      }
+      // Build a custom HTML structure for the review card
+      const formatDate = (date) => {
+        return new Date(date).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      };
 
-      // Create a temporary container with the review content for image generation
+      const formatTag = (tag) => tag.replace(/_/g, ' ');
+
       const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'fixed';
-      tempContainer.style.top = '0';
-      tempContainer.style.left = '0';
       tempContainer.style.width = '800px';
       tempContainer.style.padding = '40px';
       tempContainer.style.background = '#ffffff';
       tempContainer.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+      tempContainer.style.color = '#333333';
+      tempContainer.style.lineHeight = '1.6';
+      
+      // Create review card HTML
+      const cardHTML = `
+        <div style="
+          background: #ffffff;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          padding: 24px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          width: 100%;
+        ">
+          <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e0e0e0;
+          ">
+            <div>
+              <div style="
+                font-size: 14px;
+                color: #666666;
+                font-weight: 500;
+                margin-bottom: 8px;
+              ">${formatDate(review.timestamp)}</div>
+              ${review.semesters && review.semesters.length > 0 ? `
+                <div style="
+                  font-size: 13px;
+                  color: #999999;
+                  margin-top: 4px;
+                ">📅 ${review.semesters.join(', ')}</div>
+              ` : ''}
+              ${review.tags && review.tags.length > 0 ? `
+                <div style="
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 6px;
+                  margin-top: 8px;
+                ">
+                  ${review.tags.slice(0, 3).map(tag => `
+                    <span style="
+                      background: #f5f5f5;
+                      padding: 4px 10px;
+                      border-radius: 12px;
+                      font-size: 11px;
+                      color: #333333;
+                      font-weight: 500;
+                      border: 1px solid #e0e0e0;
+                      text-transform: capitalize;
+                    ">${formatTag(tag)}</span>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+            ${review.wouldTakeAgain !== null ? `
+              <div style="
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-weight: 600;
+                font-size: 14px;
+                ${review.wouldTakeAgain 
+                  ? 'background: #dcfce7; color: #166534;' 
+                  : 'background: #fee2e2; color: #991b1b;'
+                }
+              ">
+                ${review.wouldTakeAgain ? '✓ Would Take Again' : '✗ Would Not Take Again'}
+              </div>
+            ` : ''}
+          </div>
+
+          <div style="
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 20px;
+          ">
+            <div style="text-align: center;">
+              <div style="
+                font-size: 14px;
+                color: #666666;
+                margin-bottom: 8px;
+                font-weight: 500;
+              ">Clarity</div>
+              <div style="
+                font-size: 24px;
+                font-weight: 700;
+                color: #3b82f6;
+                margin-bottom: 4px;
+              ">${review.ratingClarity}/5</div>
+              <div style="color: #ffc107; font-size: 18px;">
+                ${'★'.repeat(review.ratingClarity)}${'☆'.repeat(5 - review.ratingClarity)}
+              </div>
+            </div>
+            <div style="text-align: center;">
+              <div style="
+                font-size: 14px;
+                color: #666666;
+                margin-bottom: 8px;
+                font-weight: 500;
+              ">Helpfulness</div>
+              <div style="
+                font-size: 24px;
+                font-weight: 700;
+                color: #3b82f6;
+                margin-bottom: 4px;
+              ">${review.ratingHelpfulness}/5</div>
+              <div style="color: #ffc107; font-size: 18px;">
+                ${'★'.repeat(review.ratingHelpfulness)}${'☆'.repeat(5 - review.ratingHelpfulness)}
+              </div>
+            </div>
+            <div style="text-align: center;">
+              <div style="
+                font-size: 14px;
+                color: #666666;
+                margin-bottom: 8px;
+                font-weight: 500;
+              ">Difficulty</div>
+              <div style="
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-weight: 700;
+                font-size: 18px;
+                display: inline-block;
+                ${review.difficulty <= 2 
+                  ? 'background: #d1fae5; color: #065f46;' 
+                  : review.difficulty === 3
+                  ? 'background: #fef3c7; color: #92400e;'
+                  : 'background: #fee2e2; color: #991b1b;'
+                }
+              ">${review.difficulty}/5</div>
+            </div>
+          </div>
+
+          ${review.textBody ? `
+            <div style="
+              margin-top: 20px;
+              padding-top: 20px;
+              border-top: 1px solid #e0e0e0;
+            ">
+              <p style="
+                line-height: 1.8;
+                color: #333333;
+                font-size: 15px;
+                margin: 0;
+              ">${review.textBody}</p>
+            </div>
+          ` : ''}
+
+          <div style="
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+            color: #666666;
+          ">
+            <div>
+              <span style="font-weight: 500;">Helpful:</span>
+              <span style="margin-left: 4px; font-weight: 600; color: #333;">${review.helpfulCount || 0}</span>
+            </div>
+            <div>
+              <span style="font-weight: 500;">Not Helpful:</span>
+              <span style="margin-left: 4px; font-weight: 600; color: #333;">${review.notHelpfulCount || 0}</span>
+            </div>
+          </div>
+
+          ${ra ? `
+            <div style="
+              margin-top: 20px;
+              padding-top: 20px;
+              border-top: 1px solid #e0e0e0;
+              text-align: center;
+            ">
+              <div style="
+                font-size: 18px;
+                font-weight: 700;
+                color: #333333;
+                margin-bottom: 4px;
+              ">${ra.firstName} ${ra.lastName}</div>
+              ${ra.school ? `
+                <div style="
+                  font-size: 14px;
+                  color: #666666;
+                ">${ra.school.name}</div>
+              ` : ''}
+              <div style="
+                margin-top: 16px;
+                font-size: 12px;
+                color: #999999;
+              ">RateMyRA.com</div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      tempContainer.innerHTML = cardHTML;
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.top = '0';
+      tempContainer.style.left = '0';
       tempContainer.style.zIndex = '9999';
       tempContainer.style.opacity = '0';
       tempContainer.style.pointerEvents = 'none';
       
-      // Clone the review card with deep clone to include all styles
-      const clonedCard = reviewCard.cloneNode(true);
-      
-      // Get computed styles and apply them
-      const computedStyles = window.getComputedStyle(reviewCard);
-      clonedCard.style.width = computedStyles.width || '100%';
-      clonedCard.style.margin = '0';
-      clonedCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-      clonedCard.style.border = '1px solid #e0e0e0';
-      clonedCard.style.borderRadius = '8px';
-      clonedCard.style.background = '#ffffff';
-      clonedCard.style.padding = computedStyles.padding || '24px';
-      
-      // Remove action buttons from cloned content
-      const actions = clonedCard.querySelector('.review-actions');
-      if (actions) actions.remove();
-      
-      // Copy all computed styles to cloned elements recursively
-      const copyStyles = (source, target) => {
-        const sourceStyles = window.getComputedStyle(source);
-        Array.from(sourceStyles).forEach(prop => {
-          try {
-            target.style.setProperty(prop, sourceStyles.getPropertyValue(prop));
-          } catch (e) {
-            // Ignore read-only properties
-          }
-        });
-        
-        // Handle children
-        const sourceChildren = source.children;
-        const targetChildren = target.children;
-        for (let i = 0; i < Math.min(sourceChildren.length, targetChildren.length); i++) {
-          copyStyles(sourceChildren[i], targetChildren[i]);
-        }
-      };
-      
-      // Copy styles from original to clone
-      copyStyles(reviewCard, clonedCard);
-      
-      tempContainer.appendChild(clonedCard);
       document.body.appendChild(tempContainer);
 
-      // Wait a bit for rendering
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // Generate image
       const dataUrl = await htmlToImage.toPng(tempContainer, {
@@ -123,10 +287,6 @@ function ShareReviewButton({ review, ra }) {
         pixelRatio: 2,
         backgroundColor: '#ffffff',
         cacheBust: true,
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left',
-        },
       });
 
       // Clean up
