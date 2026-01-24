@@ -563,16 +563,6 @@
   background: var(--primary-dark);
 }
 
-.trending-section {
-  margin-top: 40px;
-}
-
-.trending-section h2 {
-  font-size: 24px;
-  margin-bottom: 24px;
-  color: var(--text);
-}
-
 @media (max-width: 768px) {
   .review-actions {
     flex-direction: column;
