@@ -3,15 +3,18 @@
  * 
  * This script creates fake RAs and reviews for testing/demo purposes.
  * 
- * HIDDEN MARKER FOR REMOVAL:
- * - All fake RAs have dorm names prefixed with "[FAKE]" (invisible to users, searchable by admin)
- * - All fake reviews have a zero-width space character (U+200B) at the start of textBody
- * - Fake RA IDs are logged to console and listed in comments below
+ * HIDDEN MARKER FOR REMOVAL (INVISIBLE TO USERS):
+ * - All fake RAs have dorm names prefixed with zero-width non-joiner (U+200C) - INVISIBLE
+ * - All fake reviews have a zero-width space character (U+200B) at the start of textBody - INVISIBLE
+ * - Fake RA IDs are logged to console
  * 
  * TO REMOVE FAKE DATA:
- * 1. Search for RAs with dorm containing "[FAKE]"
- * 2. Search for reviews with textBody starting with zero-width space
+ * 1. Search for RAs with dorm starting with zero-width non-joiner (U+200C)
+ * 2. Search for reviews with textBody starting with zero-width space (U+200B)
  * 3. Delete all matching records
+ * 
+ * SQL to find fake RAs: SELECT * FROM "RA" WHERE dorm LIKE E'\u200C%'
+ * SQL to find fake reviews: SELECT * FROM "Review" WHERE "textBody" LIKE E'\u200B%'
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -19,8 +22,9 @@ import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
-// Zero-width space marker for fake reviews
-const FAKE_MARKER = '\u200B'; // Zero-width space (invisible)
+// Invisible markers (zero-width characters)
+const FAKE_DORM_MARKER = '\u200C'; // Zero-width non-joiner (invisible, at start of dorm name)
+const FAKE_REVIEW_MARKER = '\u200B'; // Zero-width space (invisible, at start of review text)
 
 // Real residence halls by school
 const SCHOOL_DORMS = {
@@ -185,8 +189,8 @@ export async function seedFakeData(prismaInstance = null) {
         const dorm = dorms[Math.floor(Math.random() * dorms.length)];
         const floor = `${Math.floor(Math.random() * 5) + 1}${['st', 'nd', 'rd', 'th'][Math.min(Math.floor(Math.random() * 4), 3)]} Floor`;
         
-        // Add hidden marker: [FAKE] prefix (will be searchable but looks normal in UI)
-        const dormWithMarker = `[FAKE]${dorm}`;
+        // Add invisible hidden marker: zero-width non-joiner at start (completely invisible to users)
+        const dormWithMarker = `${FAKE_DORM_MARKER}${dorm}`;
 
         try {
           const ra = await db.rA.create({
@@ -220,8 +224,8 @@ export async function seedFakeData(prismaInstance = null) {
             }
 
             const reviewText = REVIEW_TEXTS[Math.floor(Math.random() * REVIEW_TEXTS.length)];
-            // Add zero-width space marker at start (invisible)
-            const textBody = FAKE_MARKER + reviewText;
+            // Add invisible zero-width space marker at start (completely invisible to users)
+            const textBody = FAKE_REVIEW_MARKER + reviewText;
 
             const ratingOverall = (ratingClarity + ratingHelpfulness) / 2;
 
@@ -256,10 +260,11 @@ export async function seedFakeData(prismaInstance = null) {
     console.log(`   Reviews created: ${reviewsCreated}`);
     console.log(`\n📋 Fake RA IDs (for removal):`);
     console.log(JSON.stringify(fakeRAIds, null, 2));
-    console.log(`\n🔍 To remove fake data:`);
-    console.log(`   1. Search for RAs with dorm containing "[FAKE]"`);
-    console.log(`   2. Search for reviews with textBody starting with zero-width space`);
-    console.log(`   3. Delete all matching records\n`);
+    console.log(`\n🔍 To remove fake data (markers are INVISIBLE):`);
+    console.log(`   SQL for fake RAs: SELECT * FROM "RA" WHERE dorm LIKE E'\\u200C%'`);
+    console.log(`   SQL for fake reviews: SELECT * FROM "Review" WHERE "textBody" LIKE E'\\u200B%'`);
+    console.log(`   Or use Prisma: WHERE dorm starts with zero-width non-joiner (U+200C)`);
+    console.log(`   Or use Prisma: WHERE textBody starts with zero-width space (U+200B)\n`);
 
     return { created: rasCreated, reviews: reviewsCreated, raIds: fakeRAIds };
   } catch (error) {
