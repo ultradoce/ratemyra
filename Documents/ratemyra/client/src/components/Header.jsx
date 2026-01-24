@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Header.css';
@@ -6,11 +6,36 @@ import './Header.css';
 function Header() {
   const { user, isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navRef = useRef(null);
 
   const handleLogout = () => {
     logout();
     setMobileMenuOpen(false);
   };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mobileMenuOpen && navRef.current && !navRef.current.contains(event.target)) {
+        const toggleButton = document.querySelector('.mobile-menu-toggle');
+        if (toggleButton && !toggleButton.contains(event.target)) {
+          setMobileMenuOpen(false);
+        }
+      }
+    };
+
+    if (mobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden'; // Prevent body scroll when menu is open
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   return (
     <header className="header">
@@ -28,7 +53,7 @@ function Header() {
             <span></span>
             <span></span>
           </button>
-          <nav className={mobileMenuOpen ? 'mobile-open' : ''}>
+          <nav ref={navRef} className={mobileMenuOpen ? 'mobile-open' : ''}>
             <Link to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link>
             <Link to="/search" onClick={() => setMobileMenuOpen(false)}>Search RAs</Link>
             <Link to="/add-ra" onClick={() => setMobileMenuOpen(false)}>Add RA</Link>
