@@ -1,11 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { getPrismaClient } from './utils/prisma.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,21 +22,13 @@ import { errorHandler } from './middleware/errorHandler.js';
 dotenv.config();
 
 const app = express();
+const prisma = getPrismaClient();
+const PORT = process.env.PORT || 3001;
 
-// Initialize Prisma client only if DATABASE_URL is set
-let prisma = null;
-if (process.env.DATABASE_URL) {
-  try {
-    prisma = new PrismaClient();
-  } catch (error) {
-    console.warn('⚠️  Failed to initialize Prisma client:', error.message);
-  }
-} else {
+if (!prisma) {
   console.warn('⚠️  DATABASE_URL not set. Database features will be disabled.');
   console.warn('   Add PostgreSQL database in Railway to enable database features.');
 }
-
-const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());

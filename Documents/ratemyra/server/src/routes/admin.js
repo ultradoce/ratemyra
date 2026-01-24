@@ -1,11 +1,11 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { PrismaClient } from '@prisma/client';
+import { getPrismaClient } from '../utils/prisma.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 import { deleteCache, cacheKeys } from '../utils/cache.js';
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 // All admin routes require authentication and admin role
 router.use(authenticateToken);

@@ -1,14 +1,14 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import rateLimit from 'express-rate-limit';
-import { PrismaClient } from '@prisma/client';
+import { getPrismaClient } from '../utils/prisma.js';
 import { calculateOverallRating } from '../utils/rating.js';
 import { hashIP, hashDeviceFingerprint, getClientIP, detectSimilarReviews } from '../utils/abusePrevention.js';
 import { validateTags, updateTagStats, TAG_DISPLAY_NAMES } from '../utils/tags.js';
 import { deleteCache, cacheKeys, getCache, setCache } from '../utils/cache.js';
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 // Rate limiting: 5 reviews per hour per IP
 const reviewRateLimit = rateLimit({

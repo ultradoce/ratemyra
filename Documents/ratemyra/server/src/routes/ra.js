@@ -1,14 +1,14 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import rateLimit from 'express-rate-limit';
-import { PrismaClient } from '@prisma/client';
+import { getPrismaClient } from '../utils/prisma.js';
 import { calculateWeightedRating, getRatingDistribution, calculateAverageDifficulty, calculateWouldTakeAgainPercentage } from '../utils/rating.js';
 import { getCache, setCache, deleteCache, cacheKeys } from '../utils/cache.js';
 import { findPotentialDuplicates } from '../utils/duplicateDetection.js';
 import { hashIP, getClientIP } from '../utils/abusePrevention.js';
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 // Rate limiting: 10 RA submissions per hour per IP
 const createRARateLimit = rateLimit({

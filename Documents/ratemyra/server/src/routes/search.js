@@ -1,10 +1,10 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import { getPrismaClient } from '../utils/prisma.js';
 import { calculateWeightedRating, calculateAverageDifficulty, calculateWouldTakeAgainPercentage } from '../utils/rating.js';
 import { getCache, setCache, cacheKeys } from '../utils/cache.js';
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 /**
  * GET /api/search
