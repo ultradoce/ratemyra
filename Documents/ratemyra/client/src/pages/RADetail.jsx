@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { collectDeviceFingerprint } from '../utils/deviceFingerprint';
 import { useToast } from '../hooks/useToast.jsx';
 import { usePageMeta } from '../components/PageMeta';
+import ShareReviewButton from '../components/ShareReviewButton';
 import './RADetail.css';
 
 function RADetail() {
