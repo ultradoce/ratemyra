@@ -118,7 +118,8 @@ const setupHandler = async (req, res) => {
 
     const results = {
       migrations: { success: false, message: '' },
-      seeding: { success: false, message: '', created: 0, skipped: 0 }
+      seeding: { success: false, message: '', created: 0, skipped: 0 },
+      cleanup: { success: false, message: '' }
     };
 
     // Step 1: Run migrations
@@ -214,6 +215,72 @@ const setupHandler = async (req, res) => {
     } catch (adminError) {
       console.error('❌ Admin creation error:', adminError);
       results.admin = { success: false, message: adminError.message };
+    }
+
+    // Step 4: Clean up removed tags
+    try {
+      console.log('🧹 Cleaning up removed tags...');
+      const REMOVED_TAGS = [
+        'TOUGH_GRADER',
+        'PARTICIPATION_MATTERS',
+        'GROUP_WORK',
+        'INDEPENDENT_WORK',
+      ];
+
+      // Get all reviews that have any of the removed tags
+      const reviewsToUpdate = await prisma.review.findMany({
+        where: {
+          tags: {
+            hasSome: REMOVED_TAGS,
+          },
+        },
+        select: {
+          id: true,
+          tags: true,
+          raId: true,
+        },
+      });
+
+      let updatedCount = 0;
+      let totalTagsRemoved = 0;
+
+      // Update each review to remove the invalid tags
+      for (const review of reviewsToUpdate) {
+        const originalTags = [...review.tags];
+        const cleanedTags = review.tags.filter(tag => !REMOVED_TAGS.includes(tag));
+        
+        if (cleanedTags.length !== originalTags.length) {
+          const removedCount = originalTags.length - cleanedTags.length;
+          totalTagsRemoved += removedCount;
+
+          await prisma.review.update({
+            where: { id: review.id },
+            data: { tags: cleanedTags },
+          });
+
+          updatedCount++;
+        }
+      }
+
+      // Delete tag statistics for removed tags
+      let deletedStatsCount = 0;
+      for (const tag of REMOVED_TAGS) {
+        const result = await prisma.rATagStat.deleteMany({
+          where: { tag },
+        });
+        deletedStatsCount += result.count;
+      }
+
+      results.cleanup.success = true;
+      results.cleanup.message = `Cleaned up ${updatedCount} reviews, removed ${totalTagsRemoved} tags, deleted ${deletedStatsCount} tag stats`;
+      results.cleanup.reviewsUpdated = updatedCount;
+      results.cleanup.tagsRemoved = totalTagsRemoved;
+      results.cleanup.tagStatsDeleted = deletedStatsCount;
+      
+      console.log(`✅ Tag cleanup completed: ${updatedCount} reviews updated, ${totalTagsRemoved} tags removed`);
+    } catch (cleanupError) {
+      console.error('❌ Tag cleanup error:', cleanupError);
+      results.cleanup.message = cleanupError.message || 'Tag cleanup failed';
     }
 
     const allSuccess = results.migrations.success && results.seeding.success;
