@@ -54,6 +54,7 @@ export function AuthProvider({ children }) {
       return {
         success: false,
         error: error.response?.data?.error || 'Login failed',
+        emailVerified: error.response?.data?.emailVerified,
       };
     }
   };
