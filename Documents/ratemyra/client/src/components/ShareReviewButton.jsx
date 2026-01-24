@@ -275,37 +275,56 @@ function ShareReviewButton({ review, ra }) {
         </div>
       `;
 
-      tempContainer.innerHTML = cardHTML;
-      // Position off-screen but visible for rendering
-      tempContainer.style.position = 'fixed';
-      tempContainer.style.top = '0';
-      tempContainer.style.left = '0';
-      tempContainer.style.width = '800px';
-      tempContainer.style.height = 'auto';
-      tempContainer.style.zIndex = '9999';
-      tempContainer.style.visibility = 'visible';
-      tempContainer.style.opacity = '1';
-      tempContainer.style.pointerEvents = 'none';
-      tempContainer.style.overflow = 'visible';
+      // Create the card element directly instead of using innerHTML
+      const cardDiv = document.createElement('div');
+      cardDiv.style.cssText = `
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        width: 720px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #333333;
+        line-height: 1.6;
+      `;
+      cardDiv.innerHTML = cardHTML.replace(/^\s*<div[^>]*>/, '').replace(/<\/div>\s*$/, '');
       
+      tempContainer.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 800px;
+        padding: 40px;
+        background: #ffffff;
+        z-index: 9999;
+        visibility: visible;
+        opacity: 1;
+        pointer-events: none;
+        overflow: visible;
+      `;
+      
+      tempContainer.appendChild(cardDiv);
       document.body.appendChild(tempContainer);
 
-      // Force a reflow to ensure rendering
+      // Force a reflow and wait for rendering
       void tempContainer.offsetHeight;
+      void cardDiv.offsetHeight;
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Wait for fonts and rendering
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Get the actual card element (first child div)
-      const cardElement = tempContainer.firstElementChild;
-      if (!cardElement) {
-        throw new Error('Card element not found');
-      }
-
+      // Use the card div directly
+      const cardElement = cardDiv;
+      
       // Ensure card has explicit dimensions
-      const cardHeight = cardElement.scrollHeight || cardElement.offsetHeight || 600;
-      cardElement.style.height = `${cardHeight}px`;
+      const cardHeight = Math.max(cardElement.scrollHeight, cardElement.offsetHeight, 600);
+      cardElement.style.height = 'auto';
+      cardElement.style.minHeight = `${cardHeight}px`;
       cardElement.style.display = 'block';
+      
+      // Force another reflow
+      void cardElement.offsetHeight;
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Generate image using toBlob first to ensure it works
       let dataUrl;
