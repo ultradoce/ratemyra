@@ -303,6 +303,66 @@ router.get('/single/:id', authenticateToken, async (req, res, next) => {
 });
 
 /**
+ * GET /api/reviews/public/:id
+ * Get a single review by ID (public, no auth required)
+ */
+router.get('/public/:id', async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { id } = req.params;
+
+    const review = await prisma.review.findUnique({
+      where: { id },
+      include: {
+        ra: {
+          include: {
+            school: true,
+          },
+        },
+      },
+    });
+
+    if (!review || review.status !== 'ACTIVE') {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    // Return safe fields only (no sensitive data)
+    res.json({
+      review: {
+        id: review.id,
+        raId: review.raId,
+        courseCode: review.courseCode,
+        semesters: review.semesters || [],
+        ratingClarity: review.ratingClarity,
+        ratingHelpfulness: review.ratingHelpfulness,
+        ratingOverall: review.ratingOverall,
+        difficulty: review.difficulty,
+        wouldTakeAgain: review.wouldTakeAgain,
+        tags: review.tags || [],
+        attendanceRequired: review.attendanceRequired,
+        textBody: review.textBody,
+        timestamp: review.timestamp,
+        helpfulCount: review.helpfulCount || 0,
+        notHelpfulCount: review.notHelpfulCount || 0,
+        ra: {
+          id: review.ra.id,
+          firstName: review.ra.firstName,
+          lastName: review.ra.lastName,
+          dorm: review.ra.dorm,
+          floor: review.ra.floor,
+          school: review.ra.school,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/reviews/:raId
  * Get reviews for a specific RA
  */

@@ -36,6 +36,7 @@ function App() {
                 <Route path="/school/:id/ras" element={<SchoolRAs />} />
                 <Route path="/ra/:id" element={<RADetail />} />
                 <Route path="/ra/:id/review" element={<SubmitReview />} />
+                <Route path="/review/:id" element={<ReviewDetail />} />
                 <Route path="/review/:id/edit" element={<EditReview />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/help" element={<Help />} />

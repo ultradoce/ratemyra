@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -116,7 +116,7 @@ function RADetail() {
     navigate(`/review/${reviewId}/edit`);
   };
 
-  const handleShare = async () => {
+  const handleShareRA = async () => {
     const url = window.location.href;
     try {
       await navigator.clipboard.writeText(url);
@@ -299,7 +299,7 @@ function RADetail() {
                 <Link to={`/ra/${id}/review`} className="btn btn-primary btn-large">
                   Write a Review
                 </Link>
-                <button onClick={handleShare} className="btn btn-outline btn-large">
+                <button onClick={handleShareRA} className="btn btn-outline btn-large">
                   📋 Share Profile
                 </button>
               </div>
@@ -347,7 +347,7 @@ function RADetail() {
           ) : (
             <>
               {sortedReviews.map((review) => (
-                <div key={review.id} className="review-card card fade-in">
+                <div key={review.id} data-review-id={review.id} className="review-card card fade-in">
                   <div className="review-card-header">
                     <div className="review-meta-left">
                       <div className="review-date">
@@ -431,7 +431,7 @@ function RADetail() {
                         👎 Not Helpful ({review.notHelpfulCount || 0})
                       </button>
                     </div>
-                    {/* Edit functionality removed - login no longer available for regular users */}
+                    <ShareReviewButton review={review} ra={ra} />
                   </div>
                 </div>
               ))}
