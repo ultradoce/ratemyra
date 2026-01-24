@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { execSync } from 'child_process';
 import { getPrismaClient } from './utils/prisma.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -67,6 +68,86 @@ app.get('/api/health', async (req, res) => {
 
   const statusCode = health.database === 'connected' ? 200 : 503;
   res.status(statusCode).json(health);
+});
+
+// Setup endpoint - runs migrations and seeds schools (one-time setup)
+app.post('/api/setup', async (req, res) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ 
+        error: 'Database not available',
+        message: 'DATABASE_URL is not set. Please add PostgreSQL database in Railway.'
+      });
+    }
+
+    const results = {
+      migrations: { success: false, message: '' },
+      seeding: { success: false, message: '', created: 0, skipped: 0 }
+    };
+
+    // Step 1: Run migrations
+    try {
+      console.log('🔄 Running database migrations...');
+      const serverDir = path.join(__dirname, '..');
+      const migrationOutput = execSync('npx prisma migrate deploy', { 
+        cwd: serverDir,
+        encoding: 'utf8',
+        stdio: 'pipe',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      });
+      console.log('✅ Migrations completed');
+      console.log('Migration output:', migrationOutput.substring(0, 500));
+      results.migrations.success = true;
+      results.migrations.message = 'Migrations completed successfully';
+    } catch (migrationError) {
+      console.error('❌ Migration error:', migrationError.message);
+      // Check if error is because migrations are already applied
+      if (migrationError.message.includes('already applied') || migrationError.message.includes('No pending migrations')) {
+        results.migrations.success = true;
+        results.migrations.message = 'Migrations already applied';
+      } else {
+        results.migrations.message = migrationError.message;
+      }
+    }
+
+    // Step 2: Seed schools
+    try {
+      console.log('🌱 Seeding schools...');
+      const { seedSchools } = await import('./scripts/seed-schools.js');
+      const seedResult = await seedSchools(prisma);
+      results.seeding.success = true;
+      results.seeding.created = seedResult.created;
+      results.seeding.skipped = seedResult.skipped;
+      results.seeding.message = `Seeded ${seedResult.created} schools successfully`;
+    } catch (seedError) {
+      console.error('❌ Seeding error:', seedError);
+      results.seeding.message = seedError.message;
+    }
+
+    // Step 3: Create admin account
+    try {
+      console.log('👤 Ensuring admin account exists...');
+      await ensureDefaultAdmin();
+      results.admin = { success: true, message: 'Admin account ready' };
+    } catch (adminError) {
+      console.error('❌ Admin creation error:', adminError);
+      results.admin = { success: false, message: adminError.message };
+    }
+
+    const allSuccess = results.migrations.success && results.seeding.success;
+    res.status(allSuccess ? 200 : 207).json({
+      success: allSuccess,
+      message: 'Setup completed',
+      results
+    });
+  } catch (error) {
+    console.error('Setup error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
 });
 
 // Routes
