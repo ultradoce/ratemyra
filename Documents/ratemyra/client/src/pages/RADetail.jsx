@@ -6,7 +6,7 @@ import StarRating from '../components/StarRating';
 import EmptyState from '../components/EmptyState';
 import { useAuth } from '../context/AuthContext';
 import { collectDeviceFingerprint } from '../utils/deviceFingerprint';
-import { useToast } from '../hooks/useToast';
+import { useToast } from '../hooks/useToast.jsx';
 import { usePageMeta } from '../components/PageMeta';
 import './RADetail.css';
 
