@@ -9,7 +9,7 @@
  * @param {number} minReviews - Minimum number of reviews to show a rating
  * @returns {number|null} - Weighted rating or null if below threshold
  */
-export function calculateWeightedRating(reviews, minReviews = 3) {
+export function calculateWeightedRating(reviews, minReviews = 1) {
   if (!reviews || reviews.length === 0) {
     return null;
   }
