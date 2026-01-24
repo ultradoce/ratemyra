@@ -12,10 +12,15 @@ router.get('/test', async (req, res) => {
   try {
     // Simple test query
     const count = await prisma.school.count();
+    const sampleSchools = await prisma.school.findMany({
+      take: 5,
+      select: { id: true, name: true, location: true }
+    });
     res.json({ 
       success: true, 
       message: 'Schools table accessible',
-      count 
+      count,
+      sampleSchools: sampleSchools || []
     });
   } catch (error) {
     res.status(500).json({

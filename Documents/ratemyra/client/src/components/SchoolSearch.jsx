@@ -1,16 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 import './SchoolSearch.css';
-
-// Use configured API instance if available, otherwise use axios directly
-// In production, the server serves the frontend, so relative URLs work
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 10000, // 10 second timeout
-});
 
 function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter your school to get started" }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -192,10 +182,18 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
         </div>
       )}
 
-      {showDropdown && searchTerm.trim().length > 0 && schools.length === 0 && !loading && (
+      {showDropdown && searchTerm.trim().length > 0 && schools.length === 0 && !loading && !error && (
         <div ref={dropdownRef} className="school-search-dropdown">
           <div className="school-search-no-results">
-            No schools found. Try a different search term.
+            No schools found matching "{searchTerm}". Try a different search term.
+          </div>
+        </div>
+      )}
+
+      {showDropdown && !searchTerm.trim() && schools.length === 0 && !loading && !error && (
+        <div ref={dropdownRef} className="school-search-dropdown">
+          <div className="school-search-no-results">
+            No schools in database. Please contact an administrator to add schools.
           </div>
         </div>
       )}
