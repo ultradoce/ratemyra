@@ -269,24 +269,33 @@ function ShareReviewButton({ review, ra }) {
       `;
 
       tempContainer.innerHTML = cardHTML;
+      // Position off-screen but visible for rendering
       tempContainer.style.position = 'fixed';
-      tempContainer.style.top = '0';
+      tempContainer.style.top = '-10000px';
       tempContainer.style.left = '0';
       tempContainer.style.zIndex = '9999';
-      tempContainer.style.opacity = '0';
+      tempContainer.style.visibility = 'visible';
+      tempContainer.style.opacity = '1';
       tempContainer.style.pointerEvents = 'none';
       
       document.body.appendChild(tempContainer);
 
-      // Wait for rendering
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Wait for fonts and rendering
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Generate image
-      const dataUrl = await htmlToImage.toPng(tempContainer, {
+      // Generate image - target the inner card div directly
+      const cardElement = tempContainer.querySelector('div > div');
+      if (!cardElement) {
+        throw new Error('Card element not found');
+      }
+
+      const dataUrl = await htmlToImage.toPng(cardElement, {
         quality: 1.0,
         pixelRatio: 2,
         backgroundColor: '#ffffff',
         cacheBust: true,
+        width: 800,
+        height: cardElement.scrollHeight,
       });
 
       // Clean up
