@@ -80,8 +80,8 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Setup endpoint - runs migrations and seeds schools (one-time setup)
-// Can be called via GET (browser) or POST
-app.post('/api/setup', async (req, res) => {
+// Supports both GET (easy browser access) and POST
+const setupHandler = async (req, res) => {
   try {
     if (!prisma) {
       return res.status(503).json({ 
