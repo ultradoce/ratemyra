@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -110,6 +111,54 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Create default admin account if it doesn't exist
+async function ensureDefaultAdmin() {
+  try {
+    const DEFAULT_ADMIN_EMAIL = 'admin@ratemyra.com';
+    const DEFAULT_ADMIN_PASSWORD = 'admin123';
+    
+    // Check if admin already exists
+    const existing = await prisma.user.findUnique({
+      where: { email: DEFAULT_ADMIN_EMAIL.toLowerCase() },
+    });
+
+    if (existing) {
+      if (existing.role === 'ADMIN') {
+        console.log('✅ Default admin account already exists');
+        return;
+      } else {
+        // Upgrade existing user to admin
+        await prisma.user.update({
+          where: { email: DEFAULT_ADMIN_EMAIL.toLowerCase() },
+          data: { role: 'ADMIN' },
+        });
+        console.log('✅ Existing user upgraded to admin');
+        return;
+      }
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 10);
+
+    // Create admin user
+    const admin = await prisma.user.create({
+      data: {
+        email: DEFAULT_ADMIN_EMAIL.toLowerCase(),
+        password: hashedPassword,
+        role: 'ADMIN',
+      },
+    });
+
+    console.log('✅ Default admin account created!');
+    console.log(`   Email: ${admin.email}`);
+    console.log(`   Password: ${DEFAULT_ADMIN_PASSWORD}`);
+    console.log(`   Role: ${admin.role}`);
+  } catch (error) {
+    console.error('⚠️  Error creating default admin:', error.message);
+    // Don't fail server startup if admin creation fails
+  }
+}
+
 // Catch unhandled promise rejections
 process.on('unhandledRejection', (error) => {
   console.error('Unhandled Promise Rejection:', error);
@@ -122,9 +171,23 @@ process.on('uncaughtException', (error) => {
   // Don't exit immediately, let the server try to handle it
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+// Start server and create default admin
+(async () => {
+  try {
+    // Ensure default admin exists
+    await ensureDefaultAdmin();
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🔐 Default Admin Login:`);
+      console.log(`   Email: admin@ratemyra.com`);
+      console.log(`   Password: admin123`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+})();
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
