@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import StarRating from '../components/StarRating';
 import EmptyState from '../components/EmptyState';
 import SchoolSearch from '../components/SchoolSearch';
+import RASearchAutocomplete from '../components/RASearchAutocomplete';
 import './RASearch.css';
 
 function RASearch() {
@@ -13,6 +14,7 @@ function RASearch() {
   const schoolId = searchParams.get('schoolId');
   const query = searchParams.get('q') || '';
   const [selectedSchool, setSelectedSchool] = useState(null);
+  const [selectedRA, setSelectedRA] = useState(null);
   const [searchTerm, setSearchTerm] = useState(query);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,7 @@ function RASearch() {
 
   const handleSchoolSelect = (school) => {
     setSelectedSchool(school);
+    setSelectedRA(null);
     setSearchTerm('');
     setResults([]);
     // Update URL with new school
@@ -49,6 +52,14 @@ function RASearch() {
       navigate(`/search?schoolId=${school.id}`);
     } else {
       navigate('/search');
+    }
+  };
+
+  const handleRASelect = (ra) => {
+    if (ra) {
+      setSelectedRA(ra);
+      setSearchTerm(`${ra.firstName} ${ra.lastName}`);
+      navigate(`/ra/${ra.id}`);
     }
   };
 
@@ -117,21 +128,15 @@ function RASearch() {
           </div>
 
           {selectedSchool && (
-            <form onSubmit={handleSubmit} className="search-form">
+            <div className="search-form">
               <label className="search-label">Search for an RA</label>
-              <div className="ra-search-wrapper">
-                <input
-                  type="text"
-                  placeholder={`Search by name or dorm at ${selectedSchool.name}...`}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
-                />
-                <button type="submit" className="btn btn-primary" disabled={!searchTerm.trim()}>
-                  Search
-                </button>
-              </div>
-            </form>
+              <RASearchAutocomplete
+                schoolId={selectedSchool.id}
+                selectedRA={selectedRA}
+                onSelectRA={handleRASelect}
+                placeholder={`Search by name or dorm at ${selectedSchool.name}...`}
+              />
+            </div>
           )}
         </div>
 

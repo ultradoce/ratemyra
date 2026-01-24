@@ -1,25 +1,23 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import SchoolSearch from '../components/SchoolSearch';
+import RASearchAutocomplete from '../components/RASearchAutocomplete';
 import './Home.css';
 
 function Home() {
   const [selectedSchool, setSelectedSchool] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRA, setSelectedRA] = useState(null);
   const navigate = useNavigate();
 
   const handleSchoolSelect = (school) => {
     setSelectedSchool(school);
-    setSearchQuery(''); // Clear RA search when school changes
+    setSelectedRA(null); // Clear RA selection when school changes
   };
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!selectedSchool) {
-      return; // Can't search without a school
-    }
-    if (searchQuery.trim()) {
-      navigate(`/search?schoolId=${selectedSchool.id}&q=${encodeURIComponent(searchQuery.trim())}`);
+  const handleRASelect = (ra) => {
+    if (ra) {
+      setSelectedRA(ra);
+      navigate(`/ra/${ra.id}`);
     }
   };
 
@@ -43,21 +41,15 @@ function Home() {
             </div>
 
             {selectedSchool && (
-              <form onSubmit={handleSearch} className="search-form">
+              <div className="search-form">
                 <label className="search-label">Step 2: Search for an RA</label>
-                <div className="ra-search-wrapper">
-                  <input
-                    type="text"
-                    placeholder={`Search for an RA at ${selectedSchool.name}...`}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="search-input"
-                  />
-                  <button type="submit" className="btn btn-primary" disabled={!searchQuery.trim()}>
-                    Search
-                  </button>
-                </div>
-              </form>
+                <RASearchAutocomplete
+                  schoolId={selectedSchool.id}
+                  selectedRA={selectedRA}
+                  onSelectRA={handleRASelect}
+                  placeholder={`Search for an RA at ${selectedSchool.name}...`}
+                />
+              </div>
             )}
           </div>
         </div>
