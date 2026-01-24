@@ -18,9 +18,14 @@ router.get('/', async (req, res, next) => {
 
     const { q, schoolId, limit = 20 } = req.query;
 
-    // Validate schoolId
-    if (!schoolId || schoolId.trim().length === 0) {
-      return res.status(400).json({ error: 'School ID is required' });
+    // Validate schoolId - handle both string and non-string values
+    const schoolIdStr = schoolId ? String(schoolId).trim() : '';
+    if (!schoolIdStr || schoolIdStr.length === 0) {
+      console.error('Search endpoint: Missing or invalid schoolId', { schoolId, q, limit });
+      return res.status(400).json({ 
+        error: 'School ID is required',
+        received: { schoolId, q, limit }
+      });
     }
 
     // Allow empty or very short queries - just return empty results
@@ -44,7 +49,7 @@ router.get('/', async (req, res, next) => {
 
     // Build search query - schoolId is required
     const where = {
-      schoolId: schoolId,
+      schoolId: schoolIdStr,
       OR: [
         { firstName: { contains: searchTerm, mode: 'insensitive' } },
         { lastName: { contains: searchTerm, mode: 'insensitive' } },
