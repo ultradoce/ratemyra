@@ -4,7 +4,7 @@ import api from '../config/api';
 import StarRating from './StarRating';
 import './RASearchAutocomplete.css';
 
-function RASearchAutocomplete({ schoolId = null, selectedRA, onSelectRA, placeholder = "Search for an RA..." }) {
+function RASearchAutocomplete({ schoolId = null, selectedRA, onSelectRA, placeholder = "Look up an RA..." }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [ras, setRAs] = useState([]);
   const [loading, setLoading] = useState(false);
