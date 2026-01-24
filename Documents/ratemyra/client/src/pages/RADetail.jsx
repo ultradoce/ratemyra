@@ -277,8 +277,13 @@ function RADetail() {
                           year: 'numeric'
                         })}
                       </div>
+                      {review.semesters && review.semesters.length > 0 && (
+                        <div className="review-semesters" style={{ marginTop: '4px', fontSize: '13px', color: 'var(--text-light)' }}>
+                          📅 {review.semesters.join(', ')}
+                        </div>
+                      )}
                       {review.tags && review.tags.length > 0 && (
-                        <div className="review-tags-inline">
+                        <div className="review-tags-inline" style={{ marginTop: '8px' }}>
                           {review.tags.slice(0, 3).map((tag, idx) => (
                             <span key={idx} className="tag-mini">
                               {tag.replace(/_/g, ' ')}

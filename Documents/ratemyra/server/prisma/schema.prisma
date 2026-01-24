@@ -48,6 +48,7 @@ model Review {
   raId                  String
   userId                String?  // Optional: for logged-in users who can edit
   courseCode            String?  // Optional: if RA taught a class
+  semesters             String[] // Array of semesters (e.g., ["Fall 2024", "Spring 2025"])
   ratingClarity         Int      @db.SmallInt // 1-5
   ratingHelpfulness     Int      @db.SmallInt // 1-5
   ratingOverall         Float    // Derived/calculated

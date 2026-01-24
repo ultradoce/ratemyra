@@ -24,12 +24,44 @@ function EditReview() {
   const { user } = useAuth();
   const [review, setReview] = useState(null);
   const [ra, setRA] = useState(null);
+  // Generate semester options (same as SubmitReview)
+  const generateSemesterOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const semesters = [];
+    const seasons = ['Fall', 'Spring', 'Summer'];
+    
+    for (let yearOffset = -4; yearOffset <= 1; yearOffset++) {
+      const year = currentYear + yearOffset;
+      for (const season of seasons) {
+        if (yearOffset === 0) {
+          if (season === 'Fall' && currentMonth < 8) continue;
+          if (season === 'Summer' && currentMonth < 5) continue;
+          if (season === 'Spring' && currentMonth < 1) continue;
+        }
+        semesters.push(`${season} ${year}`);
+      }
+    }
+    
+    return semesters.sort((a, b) => {
+      const [seasonA, yearA] = a.split(' ');
+      const [seasonB, yearB] = b.split(' ');
+      const yearDiff = parseInt(yearB) - parseInt(yearA);
+      if (yearDiff !== 0) return yearDiff;
+      const seasonOrder = { Fall: 3, Summer: 2, Spring: 1 };
+      return seasonOrder[seasonB] - seasonOrder[seasonA];
+    });
+  };
+
+  const semesterOptions = generateSemesterOptions();
+
   const [formData, setFormData] = useState({
     ratingClarity: 5,
     ratingHelpfulness: 5,
     difficulty: 3,
     wouldTakeAgain: null,
     tags: [],
+    semesters: [],
     textBody: '',
   });
   const [loading, setLoading] = useState(true);
@@ -67,6 +99,7 @@ function EditReview() {
         difficulty: reviewData.difficulty,
         wouldTakeAgain: reviewData.wouldTakeAgain,
         tags: reviewData.tags || [],
+        semesters: reviewData.semesters || [],
         textBody: reviewData.textBody || '',
       });
 
@@ -87,6 +120,15 @@ function EditReview() {
       tags: prev.tags.includes(tag)
         ? prev.tags.filter(t => t !== tag)
         : [...prev.tags, tag],
+    }));
+  };
+
+  const handleSemesterToggle = (semester) => {
+    setFormData(prev => ({
+      ...prev,
+      semesters: prev.semesters.includes(semester)
+        ? prev.semesters.filter(s => s !== semester)
+        : [...prev.semesters, semester],
     }));
   };
 
@@ -199,6 +241,27 @@ function EditReview() {
           </div>
 
           <div className="form-group">
+            <label>Semester(s) * <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text-light)' }}>Select all semesters you had this RA</span></label>
+            <div className="tags-grid" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px' }}>
+              {semesterOptions.map((semester) => (
+                <label key={semester} className="tag-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={formData.semesters.includes(semester)}
+                    onChange={() => handleSemesterToggle(semester)}
+                  />
+                  <span>{semester}</span>
+                </label>
+              ))}
+            </div>
+            {formData.semesters.length > 0 && (
+              <p className="form-help-text" style={{ marginTop: '8px', color: 'var(--primary)' }}>
+                Selected: {formData.semesters.join(', ')}
+              </p>
+            )}
+          </div>
+
+          <div className="form-group">
             <label>Would Take Again? *</label>
             <div className="would-take-again-input">
               <button
@@ -259,7 +322,7 @@ function EditReview() {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={submitting || formData.wouldTakeAgain === null}
+              disabled={submitting || formData.wouldTakeAgain === null || formData.semesters.length === 0}
             >
               {submitting ? 'Updating...' : 'Update Review'}
             </button>

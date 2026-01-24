@@ -32,6 +32,8 @@ router.post(
     body('ratingClarity').isInt({ min: 1, max: 5 }).withMessage('Clarity rating must be 1-5'),
     body('ratingHelpfulness').isInt({ min: 1, max: 5 }).withMessage('Helpfulness rating must be 1-5'),
     body('difficulty').isInt({ min: 1, max: 5 }).withMessage('Difficulty must be 1-5'),
+    body('semesters').isArray({ min: 1 }).withMessage('At least one semester is required'),
+    body('semesters.*').isString().withMessage('Each semester must be a string'),
     body('tags').optional().isArray().withMessage('Tags must be an array'),
     body('textBody').optional().isString().isLength({ max: 2000 }).withMessage('Review text must be under 2000 characters'),
   ],
@@ -49,6 +51,7 @@ router.post(
       const {
         raId,
         courseCode,
+        semesters = [],
         ratingClarity,
         ratingHelpfulness,
         difficulty,
@@ -57,6 +60,11 @@ router.post(
         attendanceRequired = false,
         textBody,
       } = req.body;
+
+      // Validate semesters
+      if (!semesters || semesters.length === 0) {
+        return res.status(400).json({ error: 'At least one semester is required' });
+      }
 
       // Verify RA exists
       const ra = await prisma.rA.findUnique({
@@ -210,6 +218,7 @@ router.post(
           raId,
           userId, // Link to user if logged in (allows editing later)
           courseCode,
+          semesters: semesters || [],
           ratingClarity,
           ratingHelpfulness,
           ratingOverall,
@@ -319,6 +328,7 @@ router.get('/:raId', async (req, res, next) => {
         select: {
           id: true,
           courseCode: true,
+          semesters: true,
           ratingClarity: true,
           ratingHelpfulness: true,
           ratingOverall: true,
@@ -526,6 +536,8 @@ router.patch('/:id', authenticateToken, [
   body('ratingClarity').optional().isInt({ min: 1, max: 5 }),
   body('ratingHelpfulness').optional().isInt({ min: 1, max: 5 }),
   body('difficulty').optional().isInt({ min: 1, max: 5 }),
+  body('semesters').optional().isArray({ min: 1 }).withMessage('At least one semester is required'),
+  body('semesters.*').optional().isString().withMessage('Each semester must be a string'),
   body('tags').optional().isArray(),
   body('textBody').optional().isString().isLength({ max: 2000 }),
   body('wouldTakeAgain').optional().isBoolean(),
@@ -562,6 +574,12 @@ router.patch('/:id', authenticateToken, [
     if (req.body.ratingClarity !== undefined) updateData.ratingClarity = req.body.ratingClarity;
     if (req.body.ratingHelpfulness !== undefined) updateData.ratingHelpfulness = req.body.ratingHelpfulness;
     if (req.body.difficulty !== undefined) updateData.difficulty = req.body.difficulty;
+    if (req.body.semesters !== undefined) {
+      if (!Array.isArray(req.body.semesters) || req.body.semesters.length === 0) {
+        return res.status(400).json({ error: 'At least one semester is required' });
+      }
+      updateData.semesters = req.body.semesters;
+    }
     if (req.body.textBody !== undefined) updateData.textBody = req.body.textBody;
     if (req.body.wouldTakeAgain !== undefined) updateData.wouldTakeAgain = req.body.wouldTakeAgain;
     

@@ -28,6 +28,7 @@ function SubmitReview() {
     difficulty: 3,
     wouldTakeAgain: null, // null = not answered, true/false = yes/no
     tags: [],
+    semesters: [], // Array of selected semesters
     attendanceRequired: false,
     textBody: '',
     courseCode: '',
@@ -50,6 +51,45 @@ function SubmitReview() {
     }
   };
 
+  // Generate semester options (last 5 years, current and next year)
+  const generateSemesterOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth(); // 0-11
+    const semesters = [];
+    const seasons = ['Fall', 'Spring', 'Summer'];
+    
+    // Generate semesters for current year, previous 4 years, and next year
+    for (let yearOffset = -4; yearOffset <= 1; yearOffset++) {
+      const year = currentYear + yearOffset;
+      for (const season of seasons) {
+        // For current year, only show past and current semesters
+        if (yearOffset === 0) {
+          if (season === 'Fall' && currentMonth < 8) continue; // Fall starts in August
+          if (season === 'Summer' && currentMonth < 5) continue; // Summer starts in May
+          if (season === 'Spring' && currentMonth < 1) continue; // Spring starts in January
+        }
+        // For future years, show all semesters
+        if (yearOffset > 0) {
+          semesters.push(`${season} ${year}`);
+        } else {
+          semesters.push(`${season} ${year}`);
+        }
+      }
+    }
+    
+    // Sort: most recent first
+    return semesters.sort((a, b) => {
+      const [seasonA, yearA] = a.split(' ');
+      const [seasonB, yearB] = b.split(' ');
+      const yearDiff = parseInt(yearB) - parseInt(yearA);
+      if (yearDiff !== 0) return yearDiff;
+      const seasonOrder = { Fall: 3, Summer: 2, Spring: 1 };
+      return seasonOrder[seasonB] - seasonOrder[seasonA];
+    });
+  };
+
+  const semesterOptions = generateSemesterOptions();
+
   const handleTagToggle = (tag) => {
     setFormData(prev => ({
       ...prev,
@@ -59,12 +99,26 @@ function SubmitReview() {
     }));
   };
 
+  const handleSemesterToggle = (semester) => {
+    setFormData(prev => ({
+      ...prev,
+      semesters: prev.semesters.includes(semester)
+        ? prev.semesters.filter(s => s !== semester)
+        : [...prev.semesters, semester],
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validate required fields
     if (formData.wouldTakeAgain === null) {
       setError('Please indicate if you would take this RA again.');
+      return;
+    }
+    
+    if (formData.semesters.length === 0) {
+      setError('Please select at least one semester when you had this RA.');
       return;
     }
     
@@ -161,6 +215,27 @@ function SubmitReview() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>Semester(s) * <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text-light)' }}>Select all semesters you had this RA</span></label>
+            <div className="tags-grid" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px' }}>
+              {semesterOptions.map((semester) => (
+                <label key={semester} className="tag-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={formData.semesters.includes(semester)}
+                    onChange={() => handleSemesterToggle(semester)}
+                  />
+                  <span>{semester}</span>
+                </label>
+              ))}
+            </div>
+            {formData.semesters.length > 0 && (
+              <p className="form-help-text" style={{ marginTop: '8px', color: 'var(--primary)' }}>
+                Selected: {formData.semesters.join(', ')}
+              </p>
+            )}
           </div>
 
           <div className="form-group">
