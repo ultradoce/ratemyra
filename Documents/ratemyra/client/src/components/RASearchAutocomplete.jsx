@@ -148,7 +148,6 @@ function RASearchAutocomplete({ schoolId = null, selectedRA, onSelectRA, placeho
           }}
           onKeyDown={handleKeyDown}
           autoComplete="off"
-          disabled={!schoolId}
         />
         {selectedRA && (
           <button
