@@ -10,6 +10,10 @@ import SubmitReview from './pages/SubmitReview';
 import AddRA from './pages/AddRA';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
+import Help from './pages/Help';
+import Guidelines from './pages/Guidelines';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 import './App.css';
 
 function App() {
@@ -26,6 +30,10 @@ function App() {
             <Route path="/ra/:id/review" element={<SubmitReview />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/guidelines" element={<Guidelines />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
           </Routes>
         </main>
         <Footer />
