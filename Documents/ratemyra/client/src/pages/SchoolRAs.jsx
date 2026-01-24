@@ -41,7 +41,12 @@ function SchoolRAs() {
     setLoading(true);
     try {
       const response = await axios.get(`/api/ras?schoolId=${id}&page=${page}&limit=20`);
-      setRAs(response.data.ras || []);
+      const rasData = response.data.ras || response.data || [];
+      if (page === 1) {
+        setRAs(rasData);
+      } else {
+        setRAs(prev => [...prev, ...rasData]);
+      }
       setPagination(response.data.pagination);
     } catch (err) {
       console.error('Error fetching RAs:', err);
