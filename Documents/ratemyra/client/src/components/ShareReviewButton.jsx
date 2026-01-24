@@ -51,7 +51,14 @@ function ShareReviewButton({ review, ra }) {
   const handleDownloadImage = async () => {
     try {
       // Dynamically import html-to-image
-      const htmlToImage = await import('html-to-image');
+      let htmlToImage;
+      try {
+        htmlToImage = await import('html-to-image');
+      } catch (importError) {
+        console.error('Failed to import html-to-image:', importError);
+        showError('Image generation library not available. Please ensure html-to-image is installed.');
+        return;
+      }
       
       // Build a custom HTML structure for the review card
       const formatDate = (date) => {
@@ -300,19 +307,43 @@ function ShareReviewButton({ review, ra }) {
       cardElement.style.height = `${cardHeight}px`;
       cardElement.style.display = 'block';
 
-      console.log('Generating image from element:', cardElement, 'Height:', cardHeight);
-
-      // Generate image
-      const dataUrl = await htmlToImage.toPng(cardElement, {
-        quality: 1.0,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        cacheBust: true,
-        width: 800,
-        height: cardHeight,
-      });
-
-      console.log('Image generated, data URL length:', dataUrl.length);
+      // Generate image using toBlob first to ensure it works
+      let dataUrl;
+      try {
+        // Try toPng first
+        dataUrl = await htmlToImage.toPng(cardElement, {
+          quality: 1.0,
+          pixelRatio: 2,
+          backgroundColor: '#ffffff',
+          cacheBust: true,
+        });
+        
+        // Verify the image is not just white/empty
+        if (!dataUrl || dataUrl.length < 1000) {
+          throw new Error('Generated image appears to be empty');
+        }
+      } catch (pngError) {
+        console.error('toPng failed, trying toBlob:', pngError);
+        // Fallback to toBlob
+        const blob = await htmlToImage.toBlob(cardElement, {
+          quality: 1.0,
+          pixelRatio: 2,
+          backgroundColor: '#ffffff',
+          cacheBust: true,
+        });
+        
+        if (!blob) {
+          throw new Error('Failed to generate image blob');
+        }
+        
+        // Convert blob to data URL
+        dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
 
       // Clean up
       document.body.removeChild(tempContainer);
