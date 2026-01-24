@@ -555,9 +555,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
+  flex-wrap: wrap;
 }
 
 .review-helpful {
