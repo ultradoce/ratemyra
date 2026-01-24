@@ -25,9 +25,17 @@ const app = express();
 const prisma = getPrismaClient();
 const PORT = process.env.PORT || 3001;
 
+// Log environment info for debugging
+console.log('🔍 Environment Check:');
+console.log('   NODE_ENV:', process.env.NODE_ENV || 'not set');
+console.log('   PORT:', PORT);
+console.log('   DATABASE_URL:', process.env.DATABASE_URL ? `SET (${process.env.DATABASE_URL.substring(0, 20)}...)` : 'NOT SET');
+console.log('   Prisma client:', prisma ? 'INITIALIZED' : 'NULL');
+
 if (!prisma) {
   console.warn('⚠️  DATABASE_URL not set. Database features will be disabled.');
   console.warn('   Add PostgreSQL database in Railway to enable database features.');
+  console.warn('   If PostgreSQL is added, make sure it\'s in the same project and linked to this service.');
 }
 
 // Middleware
