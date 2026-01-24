@@ -30,9 +30,14 @@ function Login() {
     const result = await login(formData.email, formData.password);
 
     if (result.success) {
-      // Only admins can access admin dashboard
-      // Regular users will be redirected by AdminDashboard component
-      navigate('/admin');
+      // Check if user is admin, redirect accordingly
+      const userRole = result.user?.role;
+      if (userRole === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        // Regular users go to home page
+        navigate('/');
+      }
     } else {
       setError(result.error);
     }
