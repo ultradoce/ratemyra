@@ -102,14 +102,33 @@ const setupHandler = async (req, res) => {
       console.log('   Working directory:', serverDir);
       console.log('   DATABASE_URL set:', !!process.env.DATABASE_URL);
       
-      const migrationOutput = execSync('npx prisma migrate deploy', { 
-        cwd: serverDir,
-        encoding: 'utf8',
-        stdio: 'pipe',
-        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-      });
+      let migrationOutput;
+      try {
+        // First try migrate deploy (for existing migrations)
+        migrationOutput = execSync('npx prisma migrate deploy', { 
+          cwd: serverDir,
+          encoding: 'utf8',
+          stdio: 'pipe',
+          env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+        });
+        console.log('✅ Migrations completed');
+      } catch (deployError) {
+        const errorMsg = deployError.stderr?.toString() || deployError.message || '';
+        // If no migrations exist, use db push to sync schema
+        if (errorMsg.includes('No migration found') || errorMsg.includes('No pending migrations')) {
+          console.log('⚠️  No migrations found, using db push to sync schema...');
+          migrationOutput = execSync('npx prisma db push --accept-data-loss', { 
+            cwd: serverDir,
+            encoding: 'utf8',
+            stdio: 'pipe',
+            env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+          });
+          console.log('✅ Schema synced with db push');
+        } else {
+          throw deployError;
+        }
+      }
       
-      console.log('✅ Migrations completed');
       const outputPreview = migrationOutput.substring(0, 1000);
       console.log('Migration output:', outputPreview);
       
