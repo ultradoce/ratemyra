@@ -39,12 +39,29 @@ router.get('/trending', async (req, res, next) => {
     }
 
     // Get RAs with most reviews and highest ratings
+    // Use select to avoid issues if migration hasn't run yet
     const ras = await prisma.rA.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        dorm: true,
+        floor: true,
         school: true,
         reviews: {
           where: { status: 'ACTIVE' },
+          select: {
+            id: true,
+            ratingClarity: true,
+            ratingHelpfulness: true,
+            ratingOverall: true,
+            difficulty: true,
+            wouldTakeAgain: true,
+            tags: true,
+            timestamp: true,
+            // Don't select new fields until migration runs
+          },
         },
       },
       take: limitNum * 2, // Get more to rank
@@ -110,14 +127,32 @@ router.get('/:id', async (req, res, next) => {
       return res.json(cached);
     }
     
+    // Use select to avoid issues if migration hasn't run yet
     const ra = await prisma.rA.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        dorm: true,
+        floor: true,
         school: true,
         reviews: {
           where: { status: 'ACTIVE' },
           orderBy: { timestamp: 'desc' },
-          take: 50, // Limit for performance
+          take: 50,
+          select: {
+            id: true,
+            ratingClarity: true,
+            ratingHelpfulness: true,
+            ratingOverall: true,
+            difficulty: true,
+            wouldTakeAgain: true,
+            tags: true,
+            textBody: true,
+            timestamp: true,
+            // Don't select new fields until migration runs
+          },
         },
         tagStats: {
           orderBy: { count: 'desc' },

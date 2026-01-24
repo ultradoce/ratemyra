@@ -68,10 +68,15 @@ router.get('/', async (req, res, next) => {
     };
 
     // Fetch RAs
-    // Note: If migration hasn't run, this might fail. The migration adds userId, helpfulCount, notHelpfulCount to Review
+    // Use select to only get fields that exist (migration may not have run yet)
     const ras = await prisma.rA.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        dorm: true,
+        floor: true,
         school: true,
         reviews: {
           where: { status: 'ACTIVE' },
@@ -85,8 +90,7 @@ router.get('/', async (req, res, next) => {
             tags: true,
             textBody: true,
             timestamp: true,
-            // Only select fields that exist in current DB (userId, helpfulCount, notHelpfulCount may not exist yet)
-            // Prisma will handle missing fields gracefully if we don't select them
+            // Don't select userId, helpfulCount, notHelpfulCount - they may not exist until migration runs
           },
         },
       },
