@@ -49,19 +49,23 @@ router.get('/', async (req, res, next) => {
   
   try {
     console.log('GET /api/schools - Query params:', { q, limit });
+    console.log('   Prisma client:', prisma ? 'EXISTS' : 'NULL');
+    console.log('   DATABASE_URL:', process.env.DATABASE_URL ? `SET (${process.env.DATABASE_URL.substring(0, 20)}...)` : 'NOT SET');
     
     // Handle case where Prisma might not be initialized or database not connected
     if (!prisma) {
       console.error('❌ Prisma client not initialized');
-      console.error('   DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+      console.error('   DATABASE_URL:', process.env.DATABASE_URL ? `SET (length: ${process.env.DATABASE_URL.length})` : 'NOT SET');
+      console.error('   All DATABASE-related env vars:', Object.keys(process.env).filter(k => k.toUpperCase().includes('DATABASE')));
       console.error('   If DATABASE_URL is set, check Railway logs for Prisma initialization errors');
       return res.status(503).json({ 
         error: 'Database not available',
         message: 'Database connection is not configured. Please check Railway logs for details.',
-        debug: process.env.NODE_ENV === 'development' ? {
+        debug: {
           hasDatabaseUrl: !!process.env.DATABASE_URL,
-          databaseUrlLength: process.env.DATABASE_URL?.length || 0
-        } : undefined
+          databaseUrlLength: process.env.DATABASE_URL?.length || 0,
+          databaseUrlPrefix: process.env.DATABASE_URL?.substring(0, 20) || 'N/A'
+        }
       });
     }
     
