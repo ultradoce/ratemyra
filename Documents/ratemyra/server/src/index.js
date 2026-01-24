@@ -35,8 +35,30 @@ app.use(cors());
 app.use(express.json());
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    database: 'unknown'
+  };
+
+  if (prisma) {
+    try {
+      // Test database connection
+      await prisma.$queryRaw`SELECT 1`;
+      health.database = 'connected';
+    } catch (error) {
+      health.database = 'error';
+      health.databaseError = error.message;
+      health.databaseCode = error.code;
+    }
+  } else {
+    health.database = 'not_configured';
+    health.databaseUrlSet = !!process.env.DATABASE_URL;
+  }
+
+  const statusCode = health.database === 'connected' ? 200 : 503;
+  res.status(statusCode).json(health);
 });
 
 // Routes
