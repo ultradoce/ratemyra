@@ -41,6 +41,7 @@ function RADetail() {
     setReviewsLoading(true);
     try {
       const response = await axios.get(`/api/reviews/${id}?page=${pageNum}&limit=10`);
+      console.log('Reviews API response:', response.data);
       if (pageNum === 1) {
         setReviews(response.data.reviews || []);
       } else {
@@ -48,7 +49,9 @@ function RADetail() {
       }
       setPagination(response.data.pagination);
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching reviews:', err);
+      console.error('Error response:', err.response?.data);
+      setError('Failed to load reviews. Please try again.');
     } finally {
       setReviewsLoading(false);
     }
