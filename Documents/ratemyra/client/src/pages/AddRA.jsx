@@ -98,7 +98,11 @@ function AddRA() {
           'X-Force-Create': 'true',
         },
       });
-      navigate(`/ra/${response.data.id}`);
+      setSuccess(true);
+      setSuccessRAId(response.data.id);
+      setTimeout(() => {
+        navigate(`/ra/${response.data.id}`);
+      }, 2500);
     } catch (err) {
       const errorMsg = err.response?.data?.error || 
                       err.response?.data?.errors?.[0]?.msg || 
