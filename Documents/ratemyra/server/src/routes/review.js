@@ -394,13 +394,6 @@ router.get('/:raId', async (req, res, next) => {
         throw error;
       }
     }
-      prisma.review.count({
-        where: {
-          raId,
-          status: status.toUpperCase(),
-        },
-      }),
-    ]);
 
     // Map reviews to only include safe fields (defensive against missing columns)
     const reviews = reviewsRaw.map(review => ({
