@@ -329,10 +329,20 @@ function ShareReviewButton({ review, ra }) {
       void cardElement.offsetHeight;
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Generate image using toBlob first to ensure it works
+      // Log element info for debugging
+      console.log('Card element:', cardElement);
+      console.log('Card dimensions:', {
+        width: cardElement.offsetWidth,
+        height: cardElement.offsetHeight,
+        scrollWidth: cardElement.scrollWidth,
+        scrollHeight: cardElement.scrollHeight
+      });
+      console.log('Card innerHTML length:', cardElement.innerHTML.length);
+
+      // Generate image using toPng
       let dataUrl;
       try {
-        // Try toPng first
+        console.log('Attempting to generate PNG...');
         dataUrl = await htmlToImage.toPng(cardElement, {
           quality: 1.0,
           pixelRatio: 2,
@@ -340,31 +350,43 @@ function ShareReviewButton({ review, ra }) {
           cacheBust: true,
         });
         
-        // Verify the image is not just white/empty
-        if (!dataUrl || dataUrl.length < 1000) {
+        console.log('PNG generated, data URL length:', dataUrl ? dataUrl.length : 0);
+        console.log('Data URL preview:', dataUrl ? dataUrl.substring(0, 100) : 'null');
+        
+        // Verify the image is not just white/empty (should be at least 5KB for a real image)
+        if (!dataUrl || dataUrl.length < 5000) {
+          console.warn('Generated image appears to be too small, trying alternative method');
           throw new Error('Generated image appears to be empty');
         }
       } catch (pngError) {
-        console.error('toPng failed, trying toBlob:', pngError);
-        // Fallback to toBlob
-        const blob = await htmlToImage.toBlob(cardElement, {
-          quality: 1.0,
-          pixelRatio: 2,
-          backgroundColor: '#ffffff',
-          cacheBust: true,
-        });
-        
-        if (!blob) {
-          throw new Error('Failed to generate image blob');
+        console.error('toPng failed:', pngError);
+        try {
+          // Fallback to toBlob
+          console.log('Trying toBlob as fallback...');
+          const blob = await htmlToImage.toBlob(cardElement, {
+            quality: 1.0,
+            pixelRatio: 2,
+            backgroundColor: '#ffffff',
+            cacheBust: true,
+          });
+          
+          if (!blob || blob.size < 5000) {
+            throw new Error('Generated blob is too small or empty');
+          }
+          
+          console.log('Blob generated, size:', blob.size);
+          
+          // Convert blob to data URL
+          dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (blobError) {
+          console.error('Both methods failed:', blobError);
+          throw new Error('Failed to generate image. Please check browser console for details.');
         }
-        
-        // Convert blob to data URL
-        dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
       }
 
       // Clean up
