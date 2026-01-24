@@ -104,6 +104,10 @@
   cursor: pointer;
   transition: background-color 0.2s;
   border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .school-search-item:last-child {
@@ -112,6 +116,28 @@
 
 .school-search-item:hover {
   background-color: #f8f9fa;
+}
+
+.school-search-item-content {
+  flex: 1;
+  cursor: pointer;
+}
+
+.school-view-ras-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.school-view-ras-link:hover {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: var(--primary-dark);
 }
 
 .school-search-item-name {

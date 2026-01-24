@@ -111,7 +111,7 @@ router.get('/:id', async (req, res, next) => {
 
 /**
  * GET /api/ras
- * List RAs with optional filters
+ * List RAs with optional filters and pagination
  */
 router.get('/', async (req, res, next) => {
   try {
@@ -119,7 +119,7 @@ router.get('/', async (req, res, next) => {
       return res.status(503).json({ error: 'Database not available' });
     }
 
-    const { schoolId, dorm, search } = req.query;
+    const { schoolId, dorm, search, page = 1, limit = 20 } = req.query;
     
     const where = {};
     
@@ -138,16 +138,25 @@ router.get('/', async (req, res, next) => {
       ];
     }
 
-    const ras = await prisma.rA.findMany({
-      where,
-      include: {
-        school: true,
-        _count: {
-          select: { reviews: { where: { status: 'ACTIVE' } } },
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [ras, total] = await Promise.all([
+      prisma.rA.findMany({
+        where,
+        include: {
+          school: true,
+          _count: {
+            select: { reviews: { where: { status: 'ACTIVE' } } },
+          },
         },
-      },
-      take: 50,
-    });
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.rA.count({ where }),
+    ]);
 
     // Calculate ratings for each RA
     const rasWithRatings = await Promise.all(
@@ -160,6 +169,8 @@ router.get('/', async (req, res, next) => {
         });
         
         const rating = calculateWeightedRating(reviews);
+        const averageDifficulty = calculateAverageDifficulty(reviews);
+        const wouldTakeAgainPercentage = calculateWouldTakeAgainPercentage(reviews);
         
         return {
           id: ra.id,
@@ -169,12 +180,23 @@ router.get('/', async (req, res, next) => {
           dorm: ra.dorm,
           floor: ra.floor,
           rating,
+          averageDifficulty,
+          wouldTakeAgainPercentage,
           totalReviews: reviews.length,
+          createdAt: ra.createdAt,
         };
       })
     );
 
-    res.json(rasWithRatings);
+    res.json({
+      ras: rasWithRatings,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum),
+      },
+    });
   } catch (error) {
     next(error);
   }

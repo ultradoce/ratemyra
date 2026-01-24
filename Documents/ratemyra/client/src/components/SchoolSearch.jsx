@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../config/api';
 import './SchoolSearch.css';
 
@@ -172,17 +173,33 @@ function SchoolSearch({ onSelectSchool, selectedSchool, placeholder = "Enter you
             <div
               key={school.id}
               className="school-search-item"
-              onClick={() => handleSelectSchool(school)}
               onMouseDown={(e) => e.preventDefault()} // Prevent input blur
             >
-              <div className="school-search-item-name">{school.name}</div>
-              {school.location && (
-                <div className="school-search-item-location">{school.location}</div>
-              )}
+              <div 
+                className="school-search-item-content"
+                onClick={() => handleSelectSchool(school)}
+              >
+                <div className="school-search-item-name">{school.name}</div>
+                {school.location && (
+                  <div className="school-search-item-location">{school.location}</div>
+                )}
+                {school._count && school._count.ras > 0 && (
+                  <div className="school-search-item-count">
+                    {school._count.ras} {school._count.ras === 1 ? 'RA' : 'RAs'}
+                  </div>
+                )}
+              </div>
               {school._count && school._count.ras > 0 && (
-                <div className="school-search-item-count">
-                  {school._count.ras} {school._count.ras === 1 ? 'RA' : 'RAs'}
-                </div>
+                <Link
+                  to={`/school/${school.id}/ras`}
+                  className="school-view-ras-link"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDropdown(false);
+                  }}
+                >
+                  View All →
+                </Link>
               )}
             </div>
           ))}

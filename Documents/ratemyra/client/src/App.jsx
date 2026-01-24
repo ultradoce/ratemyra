@@ -1,5 +1,5 @@
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -10,6 +10,7 @@ import RASearch from './pages/RASearch';
 import RADetail from './pages/RADetail';
 import SubmitReview from './pages/SubmitReview';
 import AddRA from './pages/AddRA';
+import SchoolRAs from './pages/SchoolRAs';
 import Help from './pages/Help';
 import Guidelines from './pages/Guidelines';
 import Terms from './pages/Terms';
@@ -32,6 +33,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/search" element={<RASearch />} />
                 <Route path="/add-ra" element={<AddRA />} />
+                <Route path="/school/:id/ras" element={<SchoolRAs />} />
                 <Route path="/ra/:id" element={<RADetail />} />
                 <Route path="/ra/:id/review" element={<SubmitReview />} />
                 <Route path="/review/:id/edit" element={<EditReview />} />
