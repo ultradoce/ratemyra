@@ -17,9 +17,7 @@ function RASearch() {
   const [selectedRA, setSelectedRA] = useState(null);
   const [searchTerm, setSearchTerm] = useState(query);
   const [results, setResults] = useState([]);
-  const [trendingRAs, setTrendingRAs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingTrending, setLoadingTrending] = useState(false);
   const [error, setError] = useState(null);
 
   // Fetch school details if schoolId is in URL
@@ -41,29 +39,8 @@ function RASearch() {
   useEffect(() => {
     if (query && schoolId) {
       performSearch(query, schoolId);
-    } else if (!query && schoolId) {
-      // Load trending RAs when school is selected but no search query
-      fetchTrendingRAs(schoolId);
-    } else if (!schoolId) {
-      // Load global trending RAs
-      fetchTrendingRAs();
     }
   }, [query, schoolId]);
-
-  const fetchTrendingRAs = async (schoolIdParam = null) => {
-    setLoadingTrending(true);
-    try {
-      const url = schoolIdParam 
-        ? `/api/ras/trending?schoolId=${schoolIdParam}&limit=10`
-        : `/api/ras/trending?limit=10`;
-      const response = await axios.get(url);
-      setTrendingRAs(response.data.results || []);
-    } catch (err) {
-      console.error('Failed to fetch trending RAs:', err);
-    } finally {
-      setLoadingTrending(false);
-    }
-  };
 
   const handleSchoolSelect = (school) => {
     setSelectedSchool(school);
@@ -188,55 +165,6 @@ function RASearch() {
             title="No RAs found"
             message="Try searching with a different name or check your spelling."
           />
-        )}
-
-        {!query && !loadingTrending && trendingRAs.length > 0 && (
-          <div className="trending-section fade-in">
-            <h2>Trending RAs{selectedSchool ? ` at ${selectedSchool.name}` : ''}</h2>
-            <div className="results-grid">
-              {trendingRAs.map((ra) => (
-                <Link key={ra.id} to={`/ra/${ra.id}`} className="ra-card card">
-                  <div className="ra-card-header">
-                    <h3>{ra.firstName} {ra.lastName}</h3>
-                    {ra.school && (
-                      <div className="ra-card-school">{ra.school.name}</div>
-                    )}
-                  </div>
-                  <div className="ra-card-metrics">
-                    {ra.rating ? (
-                      <div className="metric metric-primary">
-                        <div className="metric-value">{ra.rating.toFixed(1)}</div>
-                        <div className="metric-label">Overall Quality</div>
-                        <StarRating rating={ra.rating} size="small" />
-                      </div>
-                    ) : (
-                      <div className="metric metric-primary">
-                        <div className="metric-value">N/A</div>
-                        <div className="metric-label">No ratings yet</div>
-                      </div>
-                    )}
-                    {ra.wouldTakeAgainPercentage !== null && ra.wouldTakeAgainPercentage !== undefined && (
-                      <div className="metric metric-highlight">
-                        <div className="metric-value">{ra.wouldTakeAgainPercentage}%</div>
-                        <div className="metric-label">Would Take Again</div>
-                      </div>
-                    )}
-                    <div className="metric">
-                      <div className="metric-value">{ra.totalReviews}</div>
-                      <div className="metric-label">Ratings</div>
-                    </div>
-                  </div>
-                  {(ra.dorm || ra.floor) && (
-                    <div className="ra-card-location">
-                      {ra.dorm && <span>{ra.dorm}</span>}
-                      {ra.dorm && ra.floor && <span> • </span>}
-                      {ra.floor && <span>Floor {ra.floor}</span>}
-                    </div>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
         )}
 
         {results.length > 0 && (

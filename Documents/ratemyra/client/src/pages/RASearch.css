@@ -244,15 +244,6 @@
     padding: 20px;
     margin: 0 16px 24px;
   }
-
-  .trending-section {
-    padding: 0 16px;
-  }
-
-  .trending-section h2 {
-    font-size: 22px;
-    margin-bottom: 20px;
-  }
 }
 
 @media (max-width: 480px) {
