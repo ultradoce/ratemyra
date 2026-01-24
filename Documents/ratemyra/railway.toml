@@ -1,7 +1,10 @@
 [build]
 builder = "NIXPACKS"
-watchPatterns = ["**/*.js", "**/*.json", "**/*.toml"]
+watchPatterns = ["**/*.js", "**/*.json", "**/*.toml", "**/*.ts", "**/*.tsx", "**/*.jsx"]
 useMetalBuild = false
+
+[build.nixpacks]
+configPath = "nixpacks.toml"
 
 [deploy]
 startCommand = "cd server && npm start"
