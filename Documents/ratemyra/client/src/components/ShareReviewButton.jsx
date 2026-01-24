@@ -61,32 +61,72 @@ function ShareReviewButton({ review, ra }) {
 
       // Create a temporary container with the review content for image generation
       const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.top = '0';
+      tempContainer.style.left = '0';
       tempContainer.style.width = '800px';
       tempContainer.style.padding = '40px';
-      tempContainer.style.background = 'white';
-      tempContainer.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      tempContainer.style.background = '#ffffff';
+      tempContainer.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+      tempContainer.style.zIndex = '9999';
+      tempContainer.style.opacity = '0';
+      tempContainer.style.pointerEvents = 'none';
       
-      // Clone the review card content
+      // Clone the review card with deep clone to include all styles
       const clonedCard = reviewCard.cloneNode(true);
-      clonedCard.style.width = '100%';
+      
+      // Get computed styles and apply them
+      const computedStyles = window.getComputedStyle(reviewCard);
+      clonedCard.style.width = computedStyles.width || '100%';
       clonedCard.style.margin = '0';
-      clonedCard.style.boxShadow = 'none';
-      clonedCard.style.border = 'none';
+      clonedCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+      clonedCard.style.border = '1px solid #e0e0e0';
+      clonedCard.style.borderRadius = '8px';
+      clonedCard.style.background = '#ffffff';
+      clonedCard.style.padding = computedStyles.padding || '24px';
       
       // Remove action buttons from cloned content
       const actions = clonedCard.querySelector('.review-actions');
       if (actions) actions.remove();
       
+      // Copy all computed styles to cloned elements recursively
+      const copyStyles = (source, target) => {
+        const sourceStyles = window.getComputedStyle(source);
+        Array.from(sourceStyles).forEach(prop => {
+          try {
+            target.style.setProperty(prop, sourceStyles.getPropertyValue(prop));
+          } catch (e) {
+            // Ignore read-only properties
+          }
+        });
+        
+        // Handle children
+        const sourceChildren = source.children;
+        const targetChildren = target.children;
+        for (let i = 0; i < Math.min(sourceChildren.length, targetChildren.length); i++) {
+          copyStyles(sourceChildren[i], targetChildren[i]);
+        }
+      };
+      
+      // Copy styles from original to clone
+      copyStyles(reviewCard, clonedCard);
+      
       tempContainer.appendChild(clonedCard);
       document.body.appendChild(tempContainer);
+
+      // Wait a bit for rendering
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Generate image
       const dataUrl = await htmlToImage.toPng(tempContainer, {
         quality: 1.0,
         pixelRatio: 2,
-        backgroundColor: 'white',
+        backgroundColor: '#ffffff',
+        cacheBust: true,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+        },
       });
 
       // Clean up
