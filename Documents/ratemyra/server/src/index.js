@@ -136,7 +136,7 @@ const setupHandler = async (req, res) => {
     // Step 2: Seed schools
     try {
       console.log('🌱 Seeding schools...');
-      const { seedSchools } = await import('./scripts/seed-schools.js');
+      const { seedSchools } = await import('../scripts/seed-schools.js');
       const seedResult = await seedSchools(prisma);
       results.seeding.success = true;
       results.seeding.created = seedResult.created;
