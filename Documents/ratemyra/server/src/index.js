@@ -40,7 +40,33 @@ if (!prisma) {
 }
 
 // Middleware
-app.use(cors());
+// CORS configuration - allow custom domain and Railway domain
+const allowedOrigins = [
+  'https://ratemyra.com',
+  'https://www.ratemyra.com',
+  process.env.RAILWAY_PUBLIC_DOMAIN, // Railway's auto-generated domain
+  process.env.CUSTOM_DOMAIN, // Custom domain from env
+].filter(Boolean); // Remove undefined values
+
+// Add localhost for development
+if (process.env.NODE_ENV !== 'production') {
+  allowedOrigins.push('http://localhost:3000', 'http://localhost:5173');
+}
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️  CORS blocked origin: ${origin}`);
+      callback(null, true); // Allow all in production for now, can be restricted later
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // Health check - MUST return 200 for Railway to consider service healthy
