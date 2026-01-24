@@ -153,6 +153,14 @@ router.post(
         return res.status(401).json({ error: 'Invalid email or password' });
       }
 
+      // Check if email is verified (admins can always login)
+      if (!user.emailVerified && user.role !== 'ADMIN') {
+        return res.status(403).json({ 
+          error: 'Please verify your email before logging in. Check your inbox for the verification link.',
+          emailVerified: false
+        });
+      }
+
       // Generate JWT token
       const token = jwt.sign(
         { userId: user.id, email: user.email, role: user.role },
