@@ -51,28 +51,59 @@ function SubmitReview() {
     }
   };
 
-  // Generate semester options (last 5 years, current and next year)
+  // Generate semester options (last 4 years, current year, up to Spring 2026)
   const generateSemesterOptions = () => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth(); // 0-11
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth(); // 0-11
+    const currentDay = currentDate.getDate();
     const semesters = [];
     const seasons = ['Fall', 'Spring', 'Summer'];
+    const maxYear = 2026; // Cap at 2026
+    const maxSemester = 'Spring 2026'; // Don't go beyond Spring 2026
     
-    // Generate semesters for current year, previous 4 years, and next year
-    for (let yearOffset = -4; yearOffset <= 1; yearOffset++) {
+    // Generate semesters for previous 4 years, current year, and future up to maxSemester
+    for (let yearOffset = -4; yearOffset <= 2; yearOffset++) {
       const year = currentYear + yearOffset;
+      
+      // Don't go beyond maxYear
+      if (year > maxYear) continue;
+      
       for (const season of seasons) {
+        const semesterStr = `${season} ${year}`;
+        
+        // Don't go beyond Spring 2026
+        if (semesterStr === 'Summer 2026' || semesterStr === 'Fall 2026') continue;
+        if (year === 2026 && season !== 'Spring') continue;
+        
         // For current year, only show past and current semesters
         if (yearOffset === 0) {
           if (season === 'Fall' && currentMonth < 8) continue; // Fall starts in August
           if (season === 'Summer' && currentMonth < 5) continue; // Summer starts in May
           if (season === 'Spring' && currentMonth < 1) continue; // Spring starts in January
+          // If we're in the semester, show it
+          if (season === 'Spring' && currentMonth >= 0 && currentMonth < 5) {
+            semesters.push(semesterStr);
+            continue;
+          }
+          if (season === 'Summer' && currentMonth >= 5 && currentMonth < 8) {
+            semesters.push(semesterStr);
+            continue;
+          }
+          if (season === 'Fall' && currentMonth >= 8) {
+            semesters.push(semesterStr);
+            continue;
+          }
         }
-        // For future years, show all semesters
-        if (yearOffset > 0) {
-          semesters.push(`${season} ${year}`);
-        } else {
-          semesters.push(`${season} ${year}`);
+        
+        // For past years, show all semesters
+        if (yearOffset < 0) {
+          semesters.push(semesterStr);
+        }
+        
+        // For future years (but not beyond max), show all semesters
+        if (yearOffset > 0 && year <= maxYear) {
+          semesters.push(semesterStr);
         }
       }
     }
