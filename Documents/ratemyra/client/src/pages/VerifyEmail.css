@@ -1,0 +1,57 @@
+.verify-email-page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.verify-card {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 40px;
+}
+
+.verify-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+}
+
+.verify-icon.success {
+  color: var(--success);
+}
+
+.verify-icon.error {
+  color: var(--danger);
+}
+
+.verify-card h1 {
+  font-size: 28px;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.verify-card p {
+  color: var(--text-light);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.redirect-message {
+  font-size: 14px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.verify-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.verify-actions .btn {
+  min-width: 150px;
+}

@@ -96,16 +96,21 @@ enum UserRole {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String   // Hashed
-  role      UserRole @default(USER)
-  schoolId  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String    // Hashed
+  role              UserRole  @default(USER)
+  schoolId          String?
+  emailVerified     Boolean   @default(false)
+  verificationToken String?   @unique
+  verificationTokenExpires DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   
   school    School?  @relation(fields: [schoolId], references: [id])
   
   @@index([email])
   @@index([role])
+  @@index([verificationToken])
+  @@index([emailVerified])
 }
