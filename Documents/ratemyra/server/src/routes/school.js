@@ -52,10 +52,16 @@ router.get('/', async (req, res, next) => {
     
     // Handle case where Prisma might not be initialized or database not connected
     if (!prisma) {
-      console.error('Prisma client not initialized');
+      console.error('❌ Prisma client not initialized');
+      console.error('   DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+      console.error('   If DATABASE_URL is set, check Railway logs for Prisma initialization errors');
       return res.status(503).json({ 
         error: 'Database not available',
-        message: 'Database connection is not configured. Please add PostgreSQL database in Railway.'
+        message: 'Database connection is not configured. Please check Railway logs for details.',
+        debug: process.env.NODE_ENV === 'development' ? {
+          hasDatabaseUrl: !!process.env.DATABASE_URL,
+          databaseUrlLength: process.env.DATABASE_URL?.length || 0
+        } : undefined
       });
     }
     
