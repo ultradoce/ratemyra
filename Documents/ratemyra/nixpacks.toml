@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs-20_x"]
+# Let Nixpacks auto-detect Node.js version from package.json engines or .node-version
 
 [phases.install]
 cmds = [
