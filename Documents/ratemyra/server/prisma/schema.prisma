@@ -13,63 +13,64 @@ datasource db {
 model School {
   id        String   @id @default(cuid())
   name      String   @unique
-  domain    String?  // .edu domain
+  domain    String? // .edu domain
   location  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  ras       RA[]
-  users     User[]
-  
+
+  ras               RA[]
+  professionalStaff ProfessionalStaff[]
+  users             User[]
+
   @@index([name])
 }
 
 model RA {
-  id          String   @id @default(cuid())
-  firstName   String
-  lastName    String
-  schoolId    String
-  dorm        String?  // Dormitory/hall name
-  floor       String?  // Floor number
-  legacyId    String?  // For merging profiles
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  reviews     Review[]
-  tagStats    RATagStat[]
-  
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  schoolId  String
+  dorm      String? // Dormitory/hall name
+  floor     String? // Floor number
+  legacyId  String? // For merging profiles
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school   School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  reviews  Review[]
+  tagStats RATagStat[]
+
   @@index([schoolId, firstName, lastName])
   @@index([legacyId])
 }
 
 model Review {
-  id                    String   @id @default(cuid())
+  id                    String       @id @default(cuid())
   raId                  String
-  userId                String?  // Optional: for logged-in users who can edit
-  courseCode            String?  // Optional: if RA taught a class
+  userId                String? // Optional: for logged-in users who can edit
+  courseCode            String? // Optional: if RA taught a class
   semesters             String[] // Array of semesters (e.g., ["Fall 2024", "Spring 2025"])
-  ratingClarity         Int      @db.SmallInt // 1-5
-  ratingHelpfulness     Int      @db.SmallInt // 1-5
-  ratingOverall         Float    // Derived/calculated
-  difficulty            Int      @db.SmallInt // 1-5
+  ratingClarity         Int          @db.SmallInt // 1-5
+  ratingHelpfulness     Int          @db.SmallInt // 1-5
+  ratingOverall         Float // Derived/calculated
+  difficulty            Int          @db.SmallInt // 1-5
   wouldTakeAgain        Boolean? // Would take this RA again (RMP-style)
   tags                  String[] // Array of tag codes
-  attendanceRequired    Boolean  @default(false)
-  textBody              String?  @db.Text
-  timestamp             DateTime @default(now())
-  ipHash                String   // Hashed IP for abuse prevention
-  deviceFingerprintHash String?  // Hashed device fingerprint
-  helpfulCount          Int      @default(0) // Number of helpful votes
-  notHelpfulCount       Int      @default(0) // Number of not helpful votes
+  attendanceRequired    Boolean      @default(false)
+  textBody              String?      @db.Text
+  timestamp             DateTime     @default(now())
+  ipHash                String // Hashed IP for abuse prevention
+  deviceFingerprintHash String? // Hashed device fingerprint
+  helpfulCount          Int          @default(0) // Number of helpful votes
+  notHelpfulCount       Int          @default(0) // Number of not helpful votes
   status                ReviewStatus @default(ACTIVE)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  
-  ra                    RA       @relation(fields: [raId], references: [id], onDelete: Cascade)
-  user                  User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  likes                 ReviewLike[]
-  
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  ra    RA           @relation(fields: [raId], references: [id], onDelete: Cascade)
+  user  User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  likes ReviewLike[]
+
   @@index([raId, status])
   @@index([userId])
   @@index([ipHash])
@@ -89,14 +90,99 @@ enum ReviewStatus {
 model RATagStat {
   id        String   @id @default(cuid())
   raId      String
-  tag       String   // Tag code like "TOUGH_GRADER", "CLEAR_LECTURES"
+  tag       String // Tag code like "TOUGH_GRADER", "CLEAR_LECTURES"
   count     Int      @default(0)
   updatedAt DateTime @updatedAt
-  
-  ra        RA       @relation(fields: [raId], references: [id], onDelete: Cascade)
-  
+
+  ra RA @relation(fields: [raId], references: [id], onDelete: Cascade)
+
   @@unique([raId, tag])
   @@index([raId])
+}
+
+model ProfessionalStaff {
+  id         String   @id @default(cuid())
+  firstName  String
+  lastName   String
+  schoolId   String
+  department String? // Department/office name
+  title      String? // Job title (e.g., "Residence Director", "Counselor")
+  office     String? // Office location
+  legacyId   String? // For merging profiles
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  school   School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  reviews  StaffReview[]
+  tagStats StaffTagStat[]
+
+  @@index([schoolId, firstName, lastName])
+  @@index([legacyId])
+}
+
+model StaffReview {
+  id                    String       @id @default(cuid())
+  staffId               String
+  userId                String? // Optional: for logged-in users who can edit
+  semesters             String[] // Array of semesters (e.g., ["Fall 2024", "Spring 2025"])
+  ratingClarity         Int          @db.SmallInt // 1-5
+  ratingHelpfulness     Int          @db.SmallInt // 1-5
+  ratingOverall         Float // Derived/calculated
+  difficulty            Int          @db.SmallInt // 1-5
+  wouldTakeAgain        Boolean? // Would work with this staff member again
+  tags                  String[] // Array of tag codes
+  textBody              String?      @db.Text
+  timestamp             DateTime     @default(now())
+  ipHash                String // Hashed IP for abuse prevention
+  deviceFingerprintHash String? // Hashed device fingerprint
+  helpfulCount          Int          @default(0) // Number of helpful votes
+  notHelpfulCount       Int          @default(0) // Number of not helpful votes
+  status                ReviewStatus @default(ACTIVE)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  staff ProfessionalStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  user  User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  likes StaffReviewLike[]
+
+  @@index([staffId, status])
+  @@index([userId])
+  @@index([ipHash])
+  @@index([deviceFingerprintHash])
+  @@index([ipHash, deviceFingerprintHash])
+  @@index([timestamp])
+  @@index([status])
+}
+
+model StaffTagStat {
+  id        String   @id @default(cuid())
+  staffId   String
+  tag       String // Tag code
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  staff ProfessionalStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, tag])
+  @@index([staffId])
+}
+
+model StaffReviewLike {
+  id                    String   @id @default(cuid())
+  reviewId              String
+  userId                String? // Optional: for logged-in users
+  ipHash                String // Hashed IP for anonymous users
+  deviceFingerprintHash String? // Device fingerprint
+  isHelpful             Boolean // true = helpful, false = not helpful
+  createdAt             DateTime @default(now())
+
+  review StaffReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([reviewId, userId])
+  @@unique([reviewId, ipHash, deviceFingerprintHash])
+  @@index([reviewId])
+  @@index([userId])
 }
 
 enum UserRole {
@@ -105,22 +191,24 @@ enum UserRole {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
-  password          String    // Hashed
-  role              UserRole  @default(USER)
-  schoolId          String?
-  emailVerified     Boolean   @default(false)
-  verificationToken String?   @unique
+  id                       String    @id @default(cuid())
+  email                    String    @unique
+  password                 String // Hashed
+  role                     UserRole  @default(USER)
+  schoolId                 String?
+  emailVerified            Boolean   @default(false)
+  verificationToken        String?   @unique
   verificationTokenExpires DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
-  school    School?  @relation(fields: [schoolId], references: [id])
-  reviews   Review[]
-  reviewLikes ReviewLike[]
-  helpMessages HelpMessage[]
-  
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  school           School?           @relation(fields: [schoolId], references: [id])
+  reviews          Review[]
+  reviewLikes      ReviewLike[]
+  staffReviews     StaffReview[]
+  staffReviewLikes StaffReviewLike[]
+  helpMessages     HelpMessage[]
+
   @@index([email])
   @@index([role])
   @@index([verificationToken])
@@ -128,17 +216,17 @@ model User {
 }
 
 model ReviewLike {
-  id        String   @id @default(cuid())
-  reviewId  String
-  userId    String?  // Optional: for logged-in users
-  ipHash    String   // Hashed IP for anonymous users
+  id                    String   @id @default(cuid())
+  reviewId              String
+  userId                String? // Optional: for logged-in users
+  ipHash                String // Hashed IP for anonymous users
   deviceFingerprintHash String? // Device fingerprint
-  isHelpful Boolean  // true = helpful, false = not helpful
-  createdAt DateTime @default(now())
-  
-  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
+  isHelpful             Boolean // true = helpful, false = not helpful
+  createdAt             DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@unique([reviewId, userId])
   @@unique([reviewId, ipHash, deviceFingerprintHash])
   @@index([reviewId])
@@ -152,14 +240,14 @@ model HelpMessage {
   subject     String
   message     String            @db.Text
   status      HelpMessageStatus @default(UNREAD)
-  userId      String?           // Optional: if submitted by logged-in user
+  userId      String? // Optional: if submitted by logged-in user
   adminNotes  String?           @db.Text // Admin notes/response
   respondedAt DateTime?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
-  
-  user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([status])
   @@index([createdAt])
   @@index([userId])

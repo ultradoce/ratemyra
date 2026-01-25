@@ -1,0 +1,285 @@
+.add-staff {
+  padding: 40px 0;
+  min-height: calc(100vh - 80px);
+}
+
+.add-staff-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.add-staff-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.add-staff-header .subtitle {
+  font-size: 18px;
+  color: var(--text-light);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.add-staff-form {
+  max-width: 700px;
+  margin: 0 auto 32px;
+  padding: 32px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.required {
+  color: var(--danger);
+}
+
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s;
+  background: white;
+  color: var(--text);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-hint {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  justify-content: flex-end;
+}
+
+.info-box {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--bg-light);
+}
+
+.info-box h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.info-box ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.info-box li {
+  padding: 8px 0;
+  padding-left: 24px;
+  position: relative;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.info-box li:before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+  font-weight: bold;
+}
+
+/* Success Animation */
+.success-animation-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.success-checkmark {
+  margin-bottom: 24px;
+}
+
+.checkmark-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: scaleIn 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.checkmark-stem {
+  width: 4px;
+  height: 24px;
+  background: white;
+  position: absolute;
+  transform: rotate(45deg);
+  left: 38px;
+  top: 42px;
+  animation: drawStem 0.3s ease-out 0.3s both;
+}
+
+.checkmark-kick {
+  width: 4px;
+  height: 14px;
+  background: white;
+  position: absolute;
+  transform: rotate(-45deg);
+  left: 32px;
+  top: 48px;
+  animation: drawKick 0.3s ease-out 0.5s both;
+}
+
+.success-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  animation: fadeInUp 0.5s ease-out 0.6s both;
+}
+
+.success-message-text {
+  font-size: 16px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+  animation: fadeInUp 0.5s ease-out 0.7s both;
+}
+
+.success-redirect {
+  font-size: 14px;
+  color: var(--text-light);
+  font-style: italic;
+  animation: fadeInUp 0.5s ease-out 0.8s both;
+}
+
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  animation: confettiFall 2s ease-out forwards;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes drawStem {
+  from {
+    height: 0;
+  }
+  to {
+    height: 24px;
+  }
+}
+
+@keyframes drawKick {
+  from {
+    height: 0;
+  }
+  to {
+    height: 14px;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .add-staff {
+    padding: 24px 0;
+  }
+
+  .add-staff-header h1 {
+    font-size: 28px;
+  }
+
+  .add-staff-form {
+    padding: 24px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}
