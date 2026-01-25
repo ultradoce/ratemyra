@@ -16,10 +16,22 @@ function AddRA() {
   const [success, setSuccess] = useState(false);
   const [successRAId, setSuccessRAId] = useState(null);
   
+  // Capitalize first letter of each word in a name
+  const capitalizeName = (str) => {
+    if (!str) return str;
+    return str
+      .split(/\s+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   // Initialize form data from URL params if available
+  const firstNameParam = searchParams.get('firstName') || '';
+  const lastNameParam = searchParams.get('lastName') || '';
+  
   const [formData, setFormData] = useState({
-    firstName: searchParams.get('firstName') || '',
-    lastName: searchParams.get('lastName') || '',
+    firstName: capitalizeName(firstNameParam),
+    lastName: capitalizeName(lastNameParam),
     schoolId: searchParams.get('schoolId') || '',
     dorm: '',
     floor: '',
@@ -57,11 +69,29 @@ function AddRA() {
     if (potentialDuplicates) setPotentialDuplicates(null);
   };
 
+  // Capitalize first letter of each word in a name
+  const capitalizeName = (str) => {
+    if (!str) return str;
+    return str
+      .split(/\s+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Auto-capitalize first letter for firstName and lastName
+    let processedValue = value;
+    if (name === 'firstName' || name === 'lastName') {
+      // Capitalize as user types, but allow them to continue typing
+      // Only capitalize the first letter of each word
+      processedValue = capitalizeName(value);
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: processedValue,
     }));
     // Clear errors when user types
     if (error) setError(null);
