@@ -18,9 +18,8 @@ model School {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ras               RA[]
-  professionalStaff ProfessionalStaff[]
-  users             User[]
+  ras       RA[]
+  users     User[]
 
   @@index([name])
 }
@@ -100,91 +99,6 @@ model RATagStat {
   @@index([raId])
 }
 
-model ProfessionalStaff {
-  id         String   @id @default(cuid())
-  firstName  String
-  lastName   String
-  schoolId   String
-  department String? // Department/office name
-  title      String? // Job title (e.g., "Residence Director", "Counselor")
-  office     String? // Office location
-  legacyId   String? // For merging profiles
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  school   School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  reviews  StaffReview[]
-  tagStats StaffTagStat[]
-
-  @@index([schoolId, firstName, lastName])
-  @@index([legacyId])
-}
-
-model StaffReview {
-  id                    String       @id @default(cuid())
-  staffId               String
-  userId                String? // Optional: for logged-in users who can edit
-  semesters             String[] // Array of semesters (e.g., ["Fall 2024", "Spring 2025"])
-  ratingClarity         Int          @db.SmallInt // 1-5
-  ratingHelpfulness     Int          @db.SmallInt // 1-5
-  ratingOverall         Float // Derived/calculated
-  difficulty            Int          @db.SmallInt // 1-5
-  wouldTakeAgain        Boolean? // Would work with this staff member again
-  tags                  String[] // Array of tag codes
-  textBody              String?      @db.Text
-  timestamp             DateTime     @default(now())
-  ipHash                String // Hashed IP for abuse prevention
-  deviceFingerprintHash String? // Hashed device fingerprint
-  helpfulCount          Int          @default(0) // Number of helpful votes
-  notHelpfulCount       Int          @default(0) // Number of not helpful votes
-  status                ReviewStatus @default(ACTIVE)
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-
-  staff ProfessionalStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  user  User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
-  likes StaffReviewLike[]
-
-  @@index([staffId, status])
-  @@index([userId])
-  @@index([ipHash])
-  @@index([deviceFingerprintHash])
-  @@index([ipHash, deviceFingerprintHash])
-  @@index([timestamp])
-  @@index([status])
-}
-
-model StaffTagStat {
-  id        String   @id @default(cuid())
-  staffId   String
-  tag       String // Tag code
-  count     Int      @default(0)
-  updatedAt DateTime @updatedAt
-
-  staff ProfessionalStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
-
-  @@unique([staffId, tag])
-  @@index([staffId])
-}
-
-model StaffReviewLike {
-  id                    String   @id @default(cuid())
-  reviewId              String
-  userId                String? // Optional: for logged-in users
-  ipHash                String // Hashed IP for anonymous users
-  deviceFingerprintHash String? // Device fingerprint
-  isHelpful             Boolean // true = helpful, false = not helpful
-  createdAt             DateTime @default(now())
-
-  review StaffReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  user   User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@unique([reviewId, userId])
-  @@unique([reviewId, ipHash, deviceFingerprintHash])
-  @@index([reviewId])
-  @@index([userId])
-}
-
 enum UserRole {
   ADMIN
   USER
@@ -202,12 +116,10 @@ model User {
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 
-  school           School?           @relation(fields: [schoolId], references: [id])
-  reviews          Review[]
-  reviewLikes      ReviewLike[]
-  staffReviews     StaffReview[]
-  staffReviewLikes StaffReviewLike[]
-  helpMessages     HelpMessage[]
+  school          School?           @relation(fields: [schoolId], references: [id])
+  reviews         Review[]
+  reviewLikes     ReviewLike[]
+  helpMessages    HelpMessage[]
 
   @@index([email])
   @@index([role])

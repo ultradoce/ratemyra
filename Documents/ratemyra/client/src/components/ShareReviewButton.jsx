@@ -265,15 +265,6 @@ function ShareReviewButton({ review, ra }) {
                   color: #666666;
                 ">${ra.school.name}</div>
               ` : ''}
-              ${ra.department || ra.title ? `
-                <div style="
-                  font-size: 13px;
-                  color: #666666;
-                  margin-top: 4px;
-                ">
-                  ${ra.department || ''}${ra.department && ra.title ? ' • ' : ''}${ra.title || ''}
-                </div>
-              ` : ''}
               <div style="
                 margin-top: 16px;
                 font-size: 12px;

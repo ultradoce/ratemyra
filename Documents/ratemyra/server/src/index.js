@@ -14,9 +14,7 @@ const __dirname = path.dirname(__filename);
 
 // Import routes
 import raRoutes from './routes/ra.js';
-import staffRoutes from './routes/staff.js';
 import reviewRoutes from './routes/review.js';
-import staffReviewRoutes from './routes/staff-review.js';
 import schoolRoutes from './routes/school.js';
 import searchRoutes from './routes/search.js';
 import authRoutes from './routes/auth.js';
@@ -479,9 +477,7 @@ app.post('/api/setup', setupHandler);
 
 // Routes
 app.use('/api/ras', raRoutes);
-app.use('/api/staff', staffRoutes);
 app.use('/api/reviews', reviewRoutes);
-app.use('/api/staff-reviews', staffReviewRoutes);
 app.use('/api/schools', schoolRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/auth', authRoutes);
