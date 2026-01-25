@@ -26,7 +26,7 @@ function Terms() {
               <li>Share reviews via links or images</li>
               <li>Access administrative features (for authorized administrators only)</li>
             </ul>
-            <p>Most features are available without creating an account. Account creation is optional and allows you to edit your reviews.</p>
+            <p>All features are available without creating an account. Account creation is not available to the general public. Administrative accounts are restricted to authorized administrators only.</p>
           </section>
 
           <section>
@@ -45,11 +45,12 @@ function Terms() {
 
           <section>
             <h2>4. User Accounts</h2>
-            <p>While most features are available without an account, certain features may require account creation. If you choose to create an account, you are responsible for:</p>
+            <p>Account creation is not available to the general public. All features of RateMyRA are accessible without creating an account, and all user interactions are anonymous by default.</p>
+            <p>Administrative accounts are restricted to authorized administrators only. If you are an authorized administrator, you are responsible for:</p>
             <ul>
               <li>Maintaining the confidentiality of your account credentials</li>
               <li>All activities that occur under your account</li>
-              <li>Providing accurate and truthful information during registration</li>
+              <li>Providing accurate and truthful information</li>
               <li>Notifying us immediately of any unauthorized use of your account</li>
               <li>Ensuring your account information remains current and accurate</li>
             </ul>

@@ -88,13 +88,16 @@ function Guidelines() {
 
           <section>
             <h2>Account Requirements</h2>
-            <p>Most features on RateMyRA are available without creating an account:</p>
+            <p>RateMyRA is designed to be fully accessible without creating an account:</p>
             <ul>
               <li>You can browse reviews, search for RAs, and vote on helpfulness anonymously</li>
               <li>You can submit reviews without an account</li>
-              <li>Creating an account allows you to edit your reviews later</li>
-              <li>Admin accounts are required for administrative functions</li>
+              <li>You can add RAs to the database without an account</li>
+              <li>All features are available to anonymous users</li>
+              <li>Account creation is not available to the general public</li>
+              <li>Administrative accounts are restricted to authorized administrators only</li>
             </ul>
+            <p>All user interactions on RateMyRA are anonymous by default. Your reviews and contributions are not linked to any personal account or email address.</p>
           </section>
 
           <section>

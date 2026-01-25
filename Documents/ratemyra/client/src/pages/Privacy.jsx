@@ -21,7 +21,7 @@ function Privacy() {
             <h3>2.1 Information You Provide</h3>
             <p>We collect information that you voluntarily provide when using the Service:</p>
             <ul>
-              <li><strong>Account Information (Optional):</strong> If you choose to create an account, we collect your email address and a hashed password. Account creation is optional and most features are available without an account.</li>
+              <li><strong>Account Information (Administrators Only):</strong> Administrative accounts require an email address and hashed password. Account creation is not available to the general public.</li>
               <li><strong>Review Content:</strong> Reviews, ratings, tags, semesters, and any text you submit in reviews</li>
               <li><strong>RA Information:</strong> Names, schools, dorm/hall information, and floor details when you add RAs to the database</li>
               <li><strong>Help Messages:</strong> If you contact our support team, we collect your name, email, subject, and message content</li>
@@ -56,7 +56,7 @@ function Privacy() {
             <ul>
               <li><strong>Service Provision:</strong> To provide, maintain, and improve our services, including displaying reviews, managing RA profiles, and enabling search functionality</li>
               <li><strong>Content Processing:</strong> To process, display, and moderate your reviews and ratings</li>
-              <li><strong>Authentication:</strong> To authenticate users and manage accounts (for users who choose to create accounts)</li>
+              <li><strong>Authentication:</strong> To authenticate administrators and manage administrative accounts</li>
               <li><strong>Abuse Prevention:</strong> To detect and prevent fraud, spam, abuse, and other prohibited activities using IP hashing, device fingerprinting, and rate limiting</li>
               <li><strong>Content Moderation:</strong> To automatically filter profanity and inappropriate content, and to flag content for manual review</li>
               <li><strong>Analytics:</strong> To analyze usage patterns, track page views, understand user behavior, and generate aggregated statistics (e.g., views by state)</li>
@@ -115,26 +115,27 @@ function Privacy() {
             <h2>6. Your Rights and Choices</h2>
             <p>You have the following rights regarding your personal information:</p>
             <ul>
-              <li><strong>Access:</strong> You can request access to the personal information we hold about you</li>
-              <li><strong>Correction:</strong> You can request correction of inaccurate information (for account holders, you can edit your reviews directly)</li>
-              <li><strong>Deletion:</strong> You can request deletion of your account and associated personal information</li>
+              <li><strong>Access:</strong> You can request access to the personal information we hold about you (if any)</li>
+              <li><strong>Correction:</strong> You can request correction of inaccurate information</li>
+              <li><strong>Deletion:</strong> You can request deletion of your content or associated information</li>
               <li><strong>Opt-Out:</strong> You can opt out of certain data collection where technically feasible (e.g., disabling cookies)</li>
-              <li><strong>Review Editing:</strong> If you created an account, you can edit or delete your reviews through your account</li>
             </ul>
             <p>To exercise these rights, please contact our support team. We will respond to your request within a reasonable timeframe.</p>
-            <p><strong>Note:</strong> If you submitted content without an account, we may not be able to identify or delete your specific content, as it is associated with hashed identifiers rather than personal information.</p>
+            <p><strong>Note:</strong> Since RateMyRA does not require account creation, content is associated with hashed identifiers (IP addresses and device fingerprints) rather than personal information. We may not be able to identify or delete your specific content unless you can provide sufficient identifying information.</p>
           </section>
 
           <section>
             <h2>7. Anonymous Use</h2>
-            <p>Most features of RateMyRA are available without creating an account. When you use the Service anonymously:</p>
+            <p>All features of RateMyRA are available without creating an account. Account creation is not available to the general public. When you use the Service:</p>
             <ul>
               <li>We do not collect your email address or other directly identifying information</li>
               <li>We use hashed IP addresses and device fingerprints to prevent abuse, but these cannot be used to identify you personally</li>
               <li>Your reviews are posted anonymously</li>
               <li>You can vote on review helpfulness anonymously</li>
+              <li>You can add RAs to the database anonymously</li>
+              <li>All your interactions are anonymous by default</li>
             </ul>
-            <p>If you choose to create an account, you gain the ability to edit your reviews, but your reviews remain publicly visible and anonymous to other users.</p>
+            <p>Administrative accounts are restricted to authorized administrators only and are not available for general user registration.</p>
           </section>
 
           <section>
@@ -180,11 +181,12 @@ function Privacy() {
               <li>Resolve disputes and enforce our agreements</li>
               <li>Maintain the integrity of our database and prevent abuse</li>
             </ul>
-            <p>When you delete your account, we will delete or anonymize your personal information (email, account credentials) within a reasonable timeframe. However:</p>
+            <p>Since account creation is not available to the general public, most users do not have accounts to delete. For administrative accounts, when an account is deleted, we will delete or anonymize personal information (email, account credentials) within a reasonable timeframe. However:</p>
             <ul>
               <li>Publicly visible content (reviews, RA profiles) may remain on the Service as it is part of the public database</li>
               <li>We may retain certain information as required by law or for legitimate business purposes (e.g., preventing abuse)</li>
               <li>Hashed IP addresses and device fingerprints used for abuse prevention may be retained to maintain security</li>
+              <li>Content submitted anonymously cannot be deleted unless you can provide sufficient identifying information</li>
             </ul>
           </section>
 
