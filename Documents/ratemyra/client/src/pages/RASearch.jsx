@@ -180,11 +180,36 @@ function RASearch() {
         )}
 
         {!loading && !error && results.length === 0 && query && (
-          <EmptyState
-            icon="🔍"
-            title="No RAs found"
-            message="Try searching with a different name or check your spelling."
-          />
+          <div style={{ marginTop: '32px' }}>
+            <EmptyState
+              icon="🔍"
+              title="No RAs found"
+              message={`We couldn't find any RAs matching "${query}". Would you like to add them?`}
+              action={
+                <Link
+                  to={`/add-ra?${(() => {
+                    const params = new URLSearchParams();
+                    // Try to parse name from query
+                    const nameParts = query.trim().split(/\s+/);
+                    if (nameParts.length > 0) {
+                      params.set('firstName', nameParts[0]);
+                      if (nameParts.length > 1) {
+                        params.set('lastName', nameParts.slice(1).join(' '));
+                      }
+                    }
+                    if (selectedSchool) {
+                      params.set('schoolId', selectedSchool.id);
+                    }
+                    return params.toString();
+                  })()}`}
+                  className="btn btn-primary btn-large"
+                  style={{ marginTop: '16px' }}
+                >
+                  ➕ Add "{query}" as a New RA
+                </Link>
+              }
+            />
+          </div>
         )}
 
         {results.length > 0 && (

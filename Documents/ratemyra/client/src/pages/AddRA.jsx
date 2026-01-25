@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
@@ -8,19 +8,43 @@ import './AddRA.css';
 
 function AddRA() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [potentialDuplicates, setPotentialDuplicates] = useState(null);
   const [success, setSuccess] = useState(false);
   const [successRAId, setSuccessRAId] = useState(null);
+  
+  // Initialize form data from URL params if available
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    schoolId: '',
+    firstName: searchParams.get('firstName') || '',
+    lastName: searchParams.get('lastName') || '',
+    schoolId: searchParams.get('schoolId') || '',
     dorm: '',
     floor: '',
   });
+
+  // Fetch school if schoolId is in URL
+  useEffect(() => {
+    const schoolIdParam = searchParams.get('schoolId');
+    if (schoolIdParam && schoolIdParam !== formData.schoolId) {
+      fetchSchool(schoolIdParam);
+    }
+  }, [searchParams]);
+
+  const fetchSchool = async (id) => {
+    try {
+      const response = await axios.get(`/api/schools/${id}`);
+      setSelectedSchool(response.data);
+      setFormData(prev => ({
+        ...prev,
+        schoolId: id,
+      }));
+    } catch (err) {
+      console.error('Failed to fetch school:', err);
+    }
+  };
 
   const handleSchoolSelect = (school) => {
     setSelectedSchool(school);

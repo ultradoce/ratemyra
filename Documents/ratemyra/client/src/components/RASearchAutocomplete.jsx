@@ -207,7 +207,32 @@ function RASearchAutocomplete({ schoolId = null, selectedRA, onSelectRA, placeho
       {showDropdown && searchTerm.trim().length > 0 && ras.length === 0 && !loading && !error && (
         <div ref={dropdownRef} className="ra-search-dropdown">
           <div className="ra-search-no-results">
-            No RAs found matching "{searchTerm}". Try a different search term.
+            <div style={{ padding: '12px', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 12px 0', color: 'var(--text-light)' }}>
+                No RAs found matching "{searchTerm}"
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ width: '100%', fontSize: '14px', padding: '8px 16px' }}
+                onClick={() => {
+                  // Parse name from search term (simple: assume first word is first name, rest is last name)
+                  const nameParts = searchTerm.trim().split(/\s+/);
+                  const firstName = nameParts[0] || '';
+                  const lastName = nameParts.slice(1).join(' ') || '';
+                  
+                  // Navigate to add RA page with pre-filled data
+                  const params = new URLSearchParams();
+                  if (firstName) params.set('firstName', firstName);
+                  if (lastName) params.set('lastName', lastName);
+                  if (schoolId) params.set('schoolId', schoolId);
+                  navigate(`/add-ra?${params.toString()}`);
+                  setShowDropdown(false);
+                }}
+              >
+                ➕ Add "{searchTerm}" as a New RA
+              </button>
+            </div>
           </div>
         </div>
       )}
