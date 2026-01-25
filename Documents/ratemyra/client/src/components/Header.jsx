@@ -58,6 +58,7 @@ function Header() {
             <Link to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link>
             <Link to="/search" onClick={() => setMobileMenuOpen(false)}>Search RAs</Link>
             <Link to="/add-ra" onClick={() => setMobileMenuOpen(false)}>Add RA</Link>
+            <Link to="/add-staff" onClick={() => setMobileMenuOpen(false)}>Add Staff</Link>
             {isAdmin && (
               <>
                 <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>Admin</Link>

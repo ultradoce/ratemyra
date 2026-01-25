@@ -10,7 +10,10 @@ import RASearch from './pages/RASearch';
 import RADetail from './pages/RADetail';
 import SubmitReview from './pages/SubmitReview';
 import AddRA from './pages/AddRA';
+import AddStaff from './pages/AddStaff';
 import SchoolRAs from './pages/SchoolRAs';
+import StaffDetail from './pages/StaffDetail';
+import SubmitStaffReview from './pages/SubmitStaffReview';
 import ReviewDetail from './pages/ReviewDetail';
 import Help from './pages/Help';
 import Guidelines from './pages/Guidelines';
@@ -34,9 +37,12 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/search" element={<RASearch />} />
                 <Route path="/add-ra" element={<AddRA />} />
+                <Route path="/add-staff" element={<AddStaff />} />
                 <Route path="/school/:id/ras" element={<SchoolRAs />} />
                 <Route path="/ra/:id" element={<RADetail />} />
                 <Route path="/ra/:id/review" element={<SubmitReview />} />
+                <Route path="/staff/:id" element={<StaffDetail />} />
+                <Route path="/staff/:id/review" element={<SubmitStaffReview />} />
                 <Route path="/review/:id" element={<ReviewDetail />} />
                 <Route path="/review/:id/edit" element={<EditReview />} />
                 <Route path="/admin" element={<AdminDashboard />} />

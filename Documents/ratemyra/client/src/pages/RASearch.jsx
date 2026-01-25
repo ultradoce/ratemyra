@@ -160,11 +160,19 @@ function RASearch() {
           )}
         </div>
 
-        <div className="add-ra-cta">
-          <p>RA not listed yet?</p>
-          <Link to="/add-ra" className="btn btn-outline">
-            Add a New RA Profile
-          </Link>
+        <div className="add-ra-cta" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div>
+            <p>RA not listed yet?</p>
+            <Link to="/add-ra" className="btn btn-outline">
+              Add a New RA Profile
+            </Link>
+          </div>
+          <div>
+            <p>Staff member not listed yet?</p>
+            <Link to="/add-staff" className="btn btn-outline">
+              Add a Staff Member
+            </Link>
+          </div>
         </div>
 
         {loading && (
@@ -182,7 +190,7 @@ function RASearch() {
         {!loading && !error && results.length === 0 && query && (
           <EmptyState
             icon="🔍"
-            title="No RAs found"
+            title="No results found"
             message="Try searching with a different name or check your spelling."
           />
         )}

@@ -51,8 +51,8 @@ router.get('/', async (req, res, next) => {
       // Continue without cache
     }
 
-    // Build search query - schoolId is optional
-    const where = {
+    // Build search query for RAs - schoolId is optional
+    const raWhere = {
       OR: [
         { firstName: { contains: searchTerm, mode: 'insensitive' } },
         { lastName: { contains: searchTerm, mode: 'insensitive' } },
@@ -60,44 +60,83 @@ router.get('/', async (req, res, next) => {
       ],
     };
     
+    // Build search query for Staff
+    const staffWhere = {
+      OR: [
+        { firstName: { contains: searchTerm, mode: 'insensitive' } },
+        { lastName: { contains: searchTerm, mode: 'insensitive' } },
+        { department: { contains: searchTerm, mode: 'insensitive' } },
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+      ],
+    };
+    
     // If schoolId is provided, filter by school
     if (schoolIdStr && schoolIdStr.length > 0) {
-      where.schoolId = schoolIdStr;
+      raWhere.schoolId = schoolIdStr;
+      staffWhere.schoolId = schoolIdStr;
     }
 
-    // Fetch RAs
-    // Use include but only select review fields that definitely exist (migration may not have run yet)
-    const ras = await prisma.rA.findMany({
-      where,
-      include: {
-        school: {
-          select: {
-            id: true,
-            name: true,
-            location: true,
-            domain: true,
+    // Fetch RAs and Staff in parallel
+    const [ras, staffMembers] = await Promise.all([
+      prisma.rA.findMany({
+        where: raWhere,
+        include: {
+          school: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+              domain: true,
+            },
+          },
+          reviews: {
+            where: { status: 'ACTIVE' },
+            select: {
+              id: true,
+              ratingClarity: true,
+              ratingHelpfulness: true,
+              ratingOverall: true,
+              difficulty: true,
+              wouldTakeAgain: true,
+              tags: true,
+              textBody: true,
+              timestamp: true,
+            },
           },
         },
-        reviews: {
-          where: { status: 'ACTIVE' },
-          select: {
-            id: true,
-            ratingClarity: true,
-            ratingHelpfulness: true,
-            ratingOverall: true,
-            difficulty: true,
-            wouldTakeAgain: true,
-            tags: true,
-            textBody: true,
-            timestamp: true,
-            // Don't select userId, helpfulCount, notHelpfulCount - they may not exist until migration runs
+        take: parseInt(limit) * 2,
+      }),
+      prisma.professionalStaff.findMany({
+        where: staffWhere,
+        include: {
+          school: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+              domain: true,
+            },
+          },
+          reviews: {
+            where: { status: 'ACTIVE' },
+            select: {
+              id: true,
+              ratingClarity: true,
+              ratingHelpfulness: true,
+              ratingOverall: true,
+              difficulty: true,
+              wouldTakeAgain: true,
+              tags: true,
+              textBody: true,
+              timestamp: true,
+            },
           },
         },
-      },
-      take: parseInt(limit) * 2, // Get more to rank, then limit
-    });
+        take: parseInt(limit) * 2,
+      }),
+    ]);
 
-    // Calculate scores for ranking
+    // Calculate scores for ranking RAs
     const rasWithScores = await Promise.all(
       ras.map(async (ra) => {
         const reviews = ra.reviews;
@@ -106,14 +145,12 @@ router.get('/', async (req, res, next) => {
         const averageDifficulty = calculateAverageDifficulty(reviews);
         const wouldTakeAgainPercentage = calculateWouldTakeAgainPercentage(reviews);
 
-        // Ranking algorithm
-        // score = rating_weight * normalized_rating + volume_weight * log(review_count) + recency_weight
         const ratingWeight = 0.6;
         const volumeWeight = 0.3;
         const recencyWeight = 0.1;
 
-        const normalizedRating = rating ? rating / 5 : 0; // Normalize to 0-1
-        const volumeScore = Math.log(reviewCount + 1) / Math.log(100); // Log scale, max at 100 reviews
+        const normalizedRating = rating ? rating / 5 : 0;
+        const volumeScore = Math.log(reviewCount + 1) / Math.log(100);
         const recencyScore = reviews.length > 0
           ? Math.min(1, (Date.now() - new Date(reviews[0].timestamp).getTime()) / (365 * 24 * 60 * 60 * 1000))
           : 0;
@@ -121,9 +158,10 @@ router.get('/', async (req, res, next) => {
         const score =
           ratingWeight * normalizedRating +
           volumeWeight * volumeScore +
-          recencyWeight * (1 - recencyScore); // More recent = higher score
+          recencyWeight * (1 - recencyScore);
 
         return {
+          type: 'ra',
           id: ra.id,
           firstName: ra.firstName,
           lastName: ra.lastName,
@@ -134,14 +172,57 @@ router.get('/', async (req, res, next) => {
           totalReviews: reviewCount,
           averageDifficulty,
           wouldTakeAgainPercentage,
-          score, // For sorting
+          score,
         };
       })
     );
 
-    // Sort by score (descending) and limit
-    rasWithScores.sort((a, b) => b.score - a.score);
-    const results = rasWithScores.slice(0, parseInt(limit));
+    // Calculate scores for ranking Staff
+    const staffWithScores = await Promise.all(
+      staffMembers.map(async (staff) => {
+        const reviews = staff.reviews;
+        const rating = calculateWeightedRating(reviews);
+        const reviewCount = reviews.length;
+        const averageDifficulty = calculateAverageDifficulty(reviews);
+        const wouldTakeAgainPercentage = calculateWouldTakeAgainPercentage(reviews);
+
+        const ratingWeight = 0.6;
+        const volumeWeight = 0.3;
+        const recencyWeight = 0.1;
+
+        const normalizedRating = rating ? rating / 5 : 0;
+        const volumeScore = Math.log(reviewCount + 1) / Math.log(100);
+        const recencyScore = reviews.length > 0
+          ? Math.min(1, (Date.now() - new Date(reviews[0].timestamp).getTime()) / (365 * 24 * 60 * 60 * 1000))
+          : 0;
+
+        const score =
+          ratingWeight * normalizedRating +
+          volumeWeight * volumeScore +
+          recencyWeight * (1 - recencyScore);
+
+        return {
+          type: 'staff',
+          id: staff.id,
+          firstName: staff.firstName,
+          lastName: staff.lastName,
+          school: staff.school,
+          department: staff.department,
+          title: staff.title,
+          office: staff.office,
+          rating,
+          totalReviews: reviewCount,
+          averageDifficulty,
+          wouldTakeAgainPercentage,
+          score,
+        };
+      })
+    );
+
+    // Combine and sort by score (descending) and limit
+    const allResults = [...rasWithScores, ...staffWithScores];
+    allResults.sort((a, b) => b.score - a.score);
+    const results = allResults.slice(0, parseInt(limit));
 
     // Remove score from response (internal only)
     const cleanResults = results.map(({ score, ...rest }) => rest);
