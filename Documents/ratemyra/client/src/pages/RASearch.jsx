@@ -199,20 +199,38 @@ function RASearch() {
           <div className="results fade-in">
             <h2>Results ({results.length})</h2>
             <div className="results-grid">
-              {results.map((ra) => (
-                <Link key={ra.id} to={`/ra/${ra.id}`} className="ra-card card">
+              {results.map((item) => (
+                <Link 
+                  key={item.id} 
+                  to={item.type === 'staff' ? `/staff/${item.id}` : `/ra/${item.id}`} 
+                  className="ra-card card"
+                >
                   <div className="ra-card-header">
-                    <h3>{ra.firstName} {ra.lastName}</h3>
-                    {ra.school && (
-                      <div className="ra-card-school">{ra.school.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h3>{item.firstName} {item.lastName}</h3>
+                      {item.type === 'staff' && (
+                        <span style={{ 
+                          fontSize: '12px', 
+                          padding: '2px 8px', 
+                          background: '#e0e7ff', 
+                          color: '#4338ca',
+                          borderRadius: '4px',
+                          fontWeight: '600'
+                        }}>
+                          Staff
+                        </span>
+                      )}
+                    </div>
+                    {item.school && (
+                      <div className="ra-card-school">{item.school.name}</div>
                     )}
                   </div>
                   <div className="ra-card-metrics">
-                    {ra.rating ? (
+                    {item.rating ? (
                       <div className="metric metric-primary">
-                        <div className="metric-value">{ra.rating.toFixed(1)}</div>
+                        <div className="metric-value">{item.rating.toFixed(1)}</div>
                         <div className="metric-label">Overall Quality</div>
-                        <StarRating rating={ra.rating} size="small" />
+                        <StarRating rating={item.rating} size="small" />
                       </div>
                     ) : (
                       <div className="metric metric-primary">
@@ -220,28 +238,41 @@ function RASearch() {
                         <div className="metric-label">No ratings yet</div>
                       </div>
                     )}
-                    {ra.wouldTakeAgainPercentage !== null && ra.wouldTakeAgainPercentage !== undefined && (
+                    {item.wouldTakeAgainPercentage !== null && item.wouldTakeAgainPercentage !== undefined && (
                       <div className="metric metric-highlight">
-                        <div className="metric-value">{ra.wouldTakeAgainPercentage}%</div>
-                        <div className="metric-label">Would Take Again</div>
+                        <div className="metric-value">{item.wouldTakeAgainPercentage}%</div>
+                        <div className="metric-label">{item.type === 'staff' ? 'Would Work With Again' : 'Would Take Again'}</div>
                       </div>
                     )}
-                    {ra.averageDifficulty && (
+                    {item.averageDifficulty && (
                       <div className="metric">
-                        <div className="metric-value">{ra.averageDifficulty.toFixed(1)}</div>
+                        <div className="metric-value">{item.averageDifficulty.toFixed(1)}</div>
                         <div className="metric-label">Difficulty</div>
                       </div>
                     )}
                     <div className="metric">
-                      <div className="metric-value">{ra.totalReviews}</div>
-                      <div className="metric-label">Ratings</div>
+                      <div className="metric-value">{item.totalReviews || 0}</div>
+                      <div className="metric-label">Reviews</div>
                     </div>
                   </div>
-                  {(ra.dorm || ra.floor) && (
+                  {item.type === 'ra' && (item.dorm || item.floor) && (
                     <div className="ra-card-location">
-                      {ra.dorm && <span>{ra.dorm}</span>}
-                      {ra.dorm && ra.floor && <span> • </span>}
-                      {ra.floor && <span>Floor {ra.floor}</span>}
+                      {item.dorm && <span>{item.dorm}</span>}
+                      {item.dorm && item.floor && <span> • </span>}
+                      {item.floor && <span>Floor {item.floor}</span>}
+                    </div>
+                  )}
+                  {item.type === 'staff' && (item.department || item.title || item.office) && (
+                    <div className="ra-card-location">
+                      {item.department && <span>{item.department}</span>}
+                      {item.department && item.title && <span> • </span>}
+                      {item.title && <span>{item.title}</span>}
+                      {item.office && (
+                        <>
+                          {(item.department || item.title) && <span> • </span>}
+                          <span>{item.office}</span>
+                        </>
+                      )}
                     </div>
                   )}
                 </Link>
