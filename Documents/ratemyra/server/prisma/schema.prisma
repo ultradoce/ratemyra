@@ -172,3 +172,20 @@ enum HelpMessageStatus {
   RESOLVED
   ARCHIVED
 }
+
+model PageView {
+  id        String   @id @default(cuid())
+  pageType  String   // 'ra', 'home', 'search', 'review', etc.
+  pageId    String?  // ID of the RA, review, etc. (null for home/search)
+  state     String?  // US state code (e.g., 'CA', 'NY')
+  country   String?  // Country code (e.g., 'US')
+  ipHash    String   // Hashed IP for privacy
+  userAgent String?  // Browser user agent
+  referrer  String?  // HTTP referrer
+  createdAt DateTime @default(now())
+
+  @@index([pageType, pageId])
+  @@index([state])
+  @@index([createdAt])
+  @@index([pageType, createdAt])
+}

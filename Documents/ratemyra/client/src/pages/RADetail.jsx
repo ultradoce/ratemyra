@@ -9,6 +9,7 @@ import { collectDeviceFingerprint } from '../utils/deviceFingerprint';
 import { useToast } from '../hooks/useToast.jsx';
 import { usePageMeta } from '../components/PageMeta';
 import ShareReviewButton from '../components/ShareReviewButton';
+import { trackPageView } from '../utils/viewTracking';
 import './RADetail.css';
 
 function RADetail() {
@@ -28,6 +29,8 @@ function RADetail() {
 
   useEffect(() => {
     fetchRAData();
+    // Track page view
+    trackPageView('ra', id);
   }, [id]);
 
   // Update page meta tags for SEO

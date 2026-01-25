@@ -284,6 +284,12 @@ function AdminDashboard() {
             RAs
           </button>
           <button
+            className={`tab ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            Analytics
+          </button>
+          <button
             className={`tab ${activeTab === 'help' ? 'active' : ''}`}
             onClick={() => setActiveTab('help')}
           >
@@ -360,6 +366,10 @@ function AdminDashboard() {
 
           {activeTab === 'ras' && (
             <RAsManagement />
+          )}
+
+          {activeTab === 'analytics' && (
+            <AnalyticsDashboard />
           )}
 
           {activeTab === 'help' && (
@@ -646,16 +656,38 @@ function ReviewsManagement() {
 function RAsManagement() {
   const [ras, setRAs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const [schoolFilter, setSchoolFilter] = useState('');
+  const [schools, setSchools] = useState([]);
+
+  useEffect(() => {
+    fetchSchools();
+  }, []);
 
   useEffect(() => {
     fetchRAs();
-  }, []);
+  }, [page, searchQuery, schoolFilter]);
+
+  const fetchSchools = async () => {
+    try {
+      const response = await axios.get('/api/admin/schools');
+      setSchools(response.data);
+    } catch (err) {
+      console.error('Failed to fetch schools:', err);
+    }
+  };
 
   const fetchRAs = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/admin/ras?limit=50');
+      const params = new URLSearchParams({ page, limit: 20 });
+      if (searchQuery) params.append('search', searchQuery);
+      if (schoolFilter) params.append('schoolId', schoolFilter);
+      const response = await axios.get(`/api/admin/ras?${params}`);
       setRAs(response.data.ras);
+      setPagination(response.data.pagination);
     } catch (err) {
       console.error(err);
     } finally {
@@ -664,43 +696,123 @@ function RAsManagement() {
   };
 
   const deleteRA = async (raId) => {
-    if (!confirm('Are you sure you want to delete this RA and all their reviews?')) return;
+    if (!confirm('Are you sure you want to delete this RA and all their reviews? This action cannot be undone.')) return;
     
     try {
       await axios.delete(`/api/admin/ras/${raId}`);
       fetchRAs();
     } catch (err) {
-      alert('Failed to delete RA');
+      alert('Failed to delete RA: ' + (err.response?.data?.error || err.message));
     }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1); // Reset to first page on search
   };
 
   return (
     <div className="management-section">
+      <div className="filters card" style={{ marginBottom: '20px', padding: '16px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="input"
+            style={{ flex: '1', minWidth: '200px' }}
+          />
+          <select
+            value={schoolFilter}
+            onChange={(e) => {
+              setSchoolFilter(e.target.value);
+              setPage(1);
+            }}
+            className="input"
+            style={{ minWidth: '200px' }}
+          >
+            <option value="">All Schools</option>
+            {schools.map((school) => (
+              <option key={school.id} value={school.id}>
+                {school.name}
+              </option>
+            ))}
+          </select>
+          {(searchQuery || schoolFilter) && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSchoolFilter('');
+                setPage(1);
+              }}
+              className="btn btn-outline"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+      </div>
+
       {loading ? (
         <LoadingSpinner size="medium" />
       ) : (
-        <div className="ras-list">
-          {ras.map((ra) => (
-            <div key={ra.id} className="ra-item card">
-              <div className="ra-header">
-                <div>
-                  <strong>{ra.firstName} {ra.lastName}</strong>
-                  <span>{ra.school.name}</span>
-                </div>
-                <div className="ra-actions">
-                  <span>{ra._count.reviews} reviews</span>
-                  <button
-                    onClick={() => deleteRA(ra.id)}
-                    className="btn btn-secondary btn-small"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              {ra.dorm && <p>Dorm: {ra.dorm}</p>}
+        <>
+          {pagination && (
+            <div style={{ marginBottom: '16px', color: 'var(--text-light)' }}>
+              Showing {((page - 1) * 20) + 1}-{Math.min(page * 20, pagination.total)} of {pagination.total} RAs
             </div>
-          ))}
-        </div>
+          )}
+          {ras.length === 0 ? (
+            <div className="empty-state">
+              <p>No RAs found. {searchQuery || schoolFilter ? 'Try adjusting your filters.' : ''}</p>
+            </div>
+          ) : (
+            <div className="ras-list">
+              {ras.map((ra) => (
+                <div key={ra.id} className="ra-item card">
+                  <div className="ra-header">
+                    <div>
+                      <strong>{ra.firstName} {ra.lastName}</strong>
+                      <span style={{ marginLeft: '8px', color: 'var(--text-light)' }}>{ra.school.name}</span>
+                    </div>
+                    <div className="ra-actions">
+                      <span style={{ marginRight: '12px' }}>{ra._count?.reviews || 0} reviews</span>
+                      <button
+                        onClick={() => deleteRA(ra.id)}
+                        className="btn btn-danger btn-small"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                  {ra.dorm && <p style={{ margin: '8px 0 0 0', color: 'var(--text-light)' }}>Dorm: {ra.dorm} {ra.floor && `• Floor ${ra.floor}`}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {pagination && pagination.pages > 1 && (
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '24px' }}>
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="btn btn-outline"
+              >
+                Previous
+              </button>
+              <span style={{ display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+                Page {page} of {pagination.pages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
+                disabled={page === pagination.pages}
+                className="btn btn-outline"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -862,6 +974,156 @@ function HelpModal({ onClose, userEmail }) {
               </button>
             </div>
           </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsDashboard() {
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('30');
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [period]);
+
+  const fetchAnalytics = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`/api/admin/analytics?period=${period}`);
+      setAnalytics(response.data);
+    } catch (err) {
+      console.error('Failed to fetch analytics:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner size="medium" />;
+  }
+
+  if (!analytics) {
+    return <div className="empty-state"><p>Failed to load analytics</p></div>;
+  }
+
+  return (
+    <div className="analytics-dashboard">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h2>Analytics Dashboard</h2>
+        <select
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+          className="input"
+          style={{ width: 'auto' }}
+        >
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last year</option>
+        </select>
+      </div>
+
+      <div className="stats-grid" style={{ marginBottom: '32px' }}>
+        <div className="stat-card card">
+          <div className="stat-icon">📈</div>
+          <div className="stat-content">
+            <div className="stat-value">{analytics.growth.rasCreated}</div>
+            <div className="stat-label">New RAs ({period}d)</div>
+          </div>
+        </div>
+        <div className="stat-card card">
+          <div className="stat-icon">⭐</div>
+          <div className="stat-content">
+            <div className="stat-value">{analytics.growth.reviewsCreated}</div>
+            <div className="stat-label">New Reviews ({period}d)</div>
+          </div>
+        </div>
+        <div className="stat-card card">
+          <div className="stat-content">
+            <div className="stat-value">{analytics.growth.totalRAs}</div>
+            <div className="stat-label">Total RAs</div>
+          </div>
+        </div>
+        <div className="stat-card card">
+          <div className="stat-content">
+            <div className="stat-value">{analytics.growth.totalReviews}</div>
+            <div className="stat-label">Total Reviews</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+        <div className="section-card card">
+          <h3>Top Schools by Reviews</h3>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {analytics.reviewsBySchool.length > 0 ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                    <th style={{ textAlign: 'left', padding: '8px' }}>School</th>
+                    <th style={{ textAlign: 'right', padding: '8px' }}>Reviews</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analytics.reviewsBySchool.map((item, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '8px' }}>{item.schoolName}</td>
+                      <td style={{ textAlign: 'right', padding: '8px', fontWeight: '600' }}>{item.reviewCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>No data available</p>
+            )}
+          </div>
+        </div>
+
+        <div className="section-card card">
+          <h3>Top RAs by Reviews</h3>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {analytics.topRAs.length > 0 ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                    <th style={{ textAlign: 'left', padding: '8px' }}>RA</th>
+                    <th style={{ textAlign: 'left', padding: '8px' }}>School</th>
+                    <th style={{ textAlign: 'right', padding: '8px' }}>Reviews</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analytics.topRAs.map((ra) => (
+                    <tr key={ra.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '8px' }}>{ra.firstName} {ra.lastName}</td>
+                      <td style={{ padding: '8px', color: 'var(--text-light)' }}>{ra.school}</td>
+                      <td style={{ textAlign: 'right', padding: '8px', fontWeight: '600' }}>{ra.reviewCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>No data available</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="section-card card">
+        <h3>Viewers by State</h3>
+        {analytics.viewsByState && analytics.viewsByState.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
+            {analytics.viewsByState.map((item, idx) => (
+              <div key={idx} style={{ padding: '12px', background: 'var(--bg)', borderRadius: '8px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: '600', marginBottom: '4px' }}>{item.views}</div>
+                <div style={{ fontSize: '14px', color: 'var(--text-light)' }}>{item.state || 'Unknown'}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No view data available yet. Views will appear here as users browse the site.</p>
         )}
       </div>
     </div>

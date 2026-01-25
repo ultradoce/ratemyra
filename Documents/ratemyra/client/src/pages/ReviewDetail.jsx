@@ -4,6 +4,7 @@ import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
 import StarRating from '../components/StarRating';
 import EmptyState from '../components/EmptyState';
+import { trackPageView } from '../utils/viewTracking';
 import './ReviewDetail.css';
 
 function ReviewDetail() {
@@ -15,6 +16,8 @@ function ReviewDetail() {
 
   useEffect(() => {
     fetchReview();
+    // Track page view
+    trackPageView('review', id);
   }, [id]);
 
   const fetchReview = async () => {

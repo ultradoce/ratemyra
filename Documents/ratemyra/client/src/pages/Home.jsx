@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import SchoolSearch from '../components/SchoolSearch';
 import RASearchAutocomplete from '../components/RASearchAutocomplete';
+import { trackPageView } from '../utils/viewTracking';
 import './Home.css';
 
 function Home() {
@@ -26,6 +27,10 @@ function Home() {
     setSearchMode('name');
     navigate('/search');
   };
+
+  useEffect(() => {
+    trackPageView('home');
+  }, []);
 
   return (
     <div className="home">

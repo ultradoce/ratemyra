@@ -7,7 +7,42 @@ import { deleteCache, cacheKeys } from '../utils/cache.js';
 const router = express.Router();
 const prisma = getPrismaClient();
 
-// All admin routes require authentication and admin role
+// Track-view endpoint is public (no auth required)
+router.post('/track-view', async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { pageType, pageId, state, country, ipHash, userAgent, referrer } = req.body;
+
+    // Validate required fields
+    if (!pageType) {
+      return res.status(400).json({ error: 'pageType is required' });
+    }
+
+    // Create page view record
+    await prisma.pageView.create({
+      data: {
+        pageType,
+        pageId: pageId || null,
+        state: state || null,
+        country: country || null,
+        ipHash: ipHash || 'unknown',
+        userAgent: userAgent || null,
+        referrer: referrer || null,
+      },
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    // Don't fail requests if tracking fails
+    console.error('Failed to track view:', error);
+    res.json({ success: false });
+  }
+});
+
+// All other admin routes require authentication and admin role
 router.use(authenticateToken);
 router.use(requireAdmin);
 
@@ -705,6 +740,172 @@ router.post('/help-request', [
       message: 'Help request submitted successfully. We will get back to you soon.',
     });
   } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/admin/analytics
+ * Get comprehensive analytics
+ */
+router.get('/analytics', async (req, res, next) => {
+  try {
+    if (!prisma) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { period = '30' } = req.query; // days
+    const days = parseInt(period);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Growth metrics
+    const [
+      rasCreated,
+      reviewsCreated,
+      totalRAs,
+      totalReviews,
+      reviewsBySchool,
+      topRAs,
+      growthData,
+      viewsByState,
+    ] = await Promise.all([
+      // RAs created in period
+      prisma.rA.count({
+        where: { createdAt: { gte: startDate } },
+      }),
+      // Reviews created in period
+      prisma.review.count({
+        where: { createdAt: { gte: startDate } },
+      }),
+      // Total counts
+      prisma.rA.count(),
+      prisma.review.count({ where: { status: 'ACTIVE' } }),
+      // Reviews by school
+      prisma.rA.groupBy({
+        by: ['schoolId'],
+        _count: { reviews: true },
+        where: {
+          reviews: {
+            some: { status: 'ACTIVE' },
+          },
+        },
+      }),
+      // Top RAs by review count
+      prisma.rA.findMany({
+        take: 10,
+        include: {
+          school: true,
+          _count: {
+            select: { reviews: { where: { status: 'ACTIVE' } } },
+          },
+        },
+        orderBy: {
+          reviews: {
+            _count: 'desc',
+          },
+        },
+      }),
+      // Daily growth data (simplified - get counts per day)
+      (async () => {
+        try {
+          const [ras, reviews] = await Promise.all([
+            prisma.rA.findMany({
+              where: { createdAt: { gte: startDate } },
+              select: { createdAt: true },
+            }),
+            prisma.review.findMany({
+              where: { 
+                createdAt: { gte: startDate },
+                status: 'ACTIVE',
+              },
+              select: { createdAt: true },
+            }),
+          ]);
+          // Group by date
+          const grouped = {};
+          ras.forEach(ra => {
+            const date = ra.createdAt.toISOString().split('T')[0];
+            if (!grouped[date]) grouped[date] = { ras: 0, reviews: 0 };
+            grouped[date].ras++;
+          });
+          reviews.forEach(review => {
+            const date = review.createdAt.toISOString().split('T')[0];
+            if (!grouped[date]) grouped[date] = { ras: 0, reviews: 0 };
+            grouped[date].reviews++;
+          });
+          return Object.entries(grouped).map(([date, counts]) => ({
+            date,
+            ras: counts.ras,
+            reviews: counts.reviews,
+          })).sort((a, b) => a.date.localeCompare(b.date));
+        } catch (err) {
+          console.error('Error fetching growth data:', err);
+          return [];
+        }
+      })(),
+      // Views by state
+      prisma.pageView.groupBy({
+        by: ['state'],
+        _count: { id: true },
+        where: {
+          createdAt: { gte: startDate },
+          state: { not: null },
+        },
+      }),
+    ]);
+
+    // Get school names for reviews by school
+    const schoolIds = reviewsBySchool.map(item => item.schoolId);
+    const schools = await prisma.school.findMany({
+      where: { id: { in: schoolIds } },
+      select: { id: true, name: true },
+    });
+    const schoolMap = new Map(schools.map(s => [s.id, s.name]));
+
+    const reviewsBySchoolFormatted = reviewsBySchool
+      .map(item => ({
+        schoolId: item.schoolId,
+        schoolName: schoolMap.get(item.schoolId) || 'Unknown',
+        reviewCount: item._count.reviews,
+      }))
+      .sort((a, b) => b.reviewCount - a.reviewCount)
+      .slice(0, 20);
+
+    // Format top RAs
+    const topRAsFormatted = topRAs
+      .filter(ra => ra._count.reviews > 0)
+      .map(ra => ({
+        id: ra.id,
+        firstName: ra.firstName,
+        lastName: ra.lastName,
+        school: ra.school.name,
+        reviewCount: ra._count.reviews,
+      }));
+
+    // Format views by state
+    const viewsByStateFormatted = viewsByState
+      .map(item => ({
+        state: item.state,
+        views: item._count.id,
+      }))
+      .sort((a, b) => b.views - a.views);
+
+    res.json({
+      period: days,
+      growth: {
+        rasCreated,
+        reviewsCreated,
+        totalRAs,
+        totalReviews,
+      },
+      reviewsBySchool: reviewsBySchoolFormatted,
+      topRAs: topRAsFormatted,
+      growthData: Array.isArray(growthData) ? growthData : [],
+      viewsByState: viewsByStateFormatted,
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
     next(error);
   }
 });
