@@ -60,11 +60,13 @@ function RASearchAutocomplete({ schoolId = null, selectedRA, onSelectRA, placeho
       const results = response.data.results || [];
       
       setRAs(results);
-      setShowDropdown(results.length > 0);
+      // Show dropdown if there are results OR if search term exists (to show "add" option)
+      setShowDropdown(results.length > 0 || term.trim().length > 0);
     } catch (err) {
       console.error('RA search error:', err);
       setRAs([]);
-      setShowDropdown(false);
+      // Keep dropdown open if there's a search term (to show "add" option)
+      setShowDropdown(term.trim().length > 0);
       if (err.response?.status !== 400) {
         setError('Failed to search RAs');
       }
@@ -142,7 +144,7 @@ function RASearchAutocomplete({ schoolId = null, selectedRA, onSelectRA, placeho
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={() => {
-            if (ras.length > 0) {
+            if (ras.length > 0 || searchTerm.trim().length > 0) {
               setShowDropdown(true);
             }
           }}
