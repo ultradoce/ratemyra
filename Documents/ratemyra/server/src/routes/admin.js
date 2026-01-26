@@ -21,20 +21,28 @@ router.post('/track-view', async (req, res, next) => {
       return res.status(400).json({ error: 'pageType is required' });
     }
 
-    // Create page view record
-    await prisma.pageView.create({
-      data: {
-        pageType,
-        pageId: pageId || null,
-        state: state || null,
-        country: country || null,
-        ipHash: ipHash || 'unknown',
-        userAgent: userAgent || null,
-        referrer: referrer || null,
-      },
-    });
-
-    res.json({ success: true });
+    // Create page view record (handle case where PageView table doesn't exist yet)
+    try {
+      await prisma.pageView.create({
+        data: {
+          pageType,
+          pageId: pageId || null,
+          state: state || null,
+          country: country || null,
+          ipHash: ipHash || 'unknown',
+          userAgent: userAgent || null,
+          referrer: referrer || null,
+        },
+      });
+      res.json({ success: true });
+    } catch (error) {
+      // If PageView table doesn't exist, silently fail (migration hasn't run yet)
+      if (error.code === 'P2021' || error.message?.includes('does not exist') || error.message?.includes('PageView')) {
+        console.log('PageView table not found, skipping view tracking');
+        return res.json({ success: false, message: 'PageView table not available' });
+      }
+      throw error;
+    }
   } catch (error) {
     // Don't fail requests if tracking fails
     console.error('Failed to track view:', error);
@@ -844,15 +852,26 @@ router.get('/analytics', async (req, res, next) => {
           return [];
         }
       })(),
-      // Views by state
-      prisma.pageView.groupBy({
-        by: ['state'],
-        _count: { id: true },
-        where: {
-          createdAt: { gte: startDate },
-          state: { not: null },
-        },
-      }),
+      // Views by state (handle case where PageView table doesn't exist yet)
+      (async () => {
+        try {
+          return await prisma.pageView.groupBy({
+            by: ['state'],
+            _count: { id: true },
+            where: {
+              createdAt: { gte: startDate },
+              state: { not: null },
+            },
+          });
+        } catch (err) {
+          // If PageView table doesn't exist yet, return empty array
+          if (err.code === 'P2021' || err.message?.includes('does not exist') || err.message?.includes('PageView')) {
+            console.log('PageView table not found, returning empty views data');
+            return [];
+          }
+          throw err;
+        }
+      })(),
     ]);
 
     // Get school names for reviews by school
@@ -883,8 +902,8 @@ router.get('/analytics', async (req, res, next) => {
         reviewCount: ra._count.reviews,
       }));
 
-    // Format views by state
-    const viewsByStateFormatted = viewsByState
+    // Format views by state (handle case where viewsByState might be empty or undefined)
+    const viewsByStateFormatted = (Array.isArray(viewsByState) ? viewsByState : [])
       .map(item => ({
         state: item.state,
         views: item._count.id,

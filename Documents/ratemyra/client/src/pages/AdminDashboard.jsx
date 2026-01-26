@@ -996,6 +996,12 @@ function AnalyticsDashboard() {
       setAnalytics(response.data);
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
+      // Show error message to user
+      if (err.response?.data?.error) {
+        alert(`Failed to load analytics: ${err.response.data.error}`);
+      } else {
+        alert('Failed to load analytics. Please try again or check if the database migration has been run.');
+      }
     } finally {
       setLoading(false);
     }
