@@ -24,21 +24,27 @@ async function getUserState() {
     };
 
     // Try to get more accurate location from a free service
+    // Note: This may fail due to CORS, which is expected and handled gracefully
     try {
       const response = await fetch('https://ipapi.co/json/', { 
         method: 'GET',
         headers: { 'Accept': 'application/json' },
+        mode: 'cors',
         signal: AbortSignal.timeout(2000) // 2 second timeout
-      });
-      if (response.ok) {
+      }).catch(() => null); // Silently catch CORS errors
+      
+      if (response && response.ok) {
         const data = await response.json();
         if (data.region_code && data.country_code === 'US') {
           return data.region_code; // Returns state code like 'CA', 'NY'
         }
       }
     } catch (err) {
-      // Fallback to timezone if service fails
-      console.log('Geolocation service unavailable, using timezone fallback');
+      // Fallback to timezone if service fails (CORS errors are expected)
+      // Don't log CORS errors as they're normal
+      if (!err.message?.includes('CORS')) {
+        console.log('Geolocation service unavailable, using timezone fallback');
+      }
     }
 
     // Fallback to timezone mapping

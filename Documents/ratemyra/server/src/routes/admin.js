@@ -790,30 +790,43 @@ router.get('/analytics', async (req, res, next) => {
       prisma.rA.count(),
       prisma.review.count({ where: { status: 'ACTIVE' } }),
       // Reviews by school
-      prisma.rA.groupBy({
-        by: ['schoolId'],
-        _count: { reviews: true },
-        where: {
-          reviews: {
-            some: { status: 'ACTIVE' },
-          },
-        },
-      }),
+      (async () => {
+        try {
+          return await prisma.rA.groupBy({
+            by: ['schoolId'],
+            _count: { reviews: true },
+            where: {
+              reviews: {
+                some: { status: 'ACTIVE' },
+              },
+            },
+          });
+        } catch (err) {
+          console.error('Error fetching reviews by school:', err);
+          return [];
+        }
+      })(),
       // Top RAs by review count
-      prisma.rA.findMany({
-        take: 10,
-        include: {
-          school: true,
-          _count: {
-            select: { reviews: { where: { status: 'ACTIVE' } } },
-          },
-        },
-        orderBy: {
-          reviews: {
-            _count: 'desc',
-          },
-        },
-      }),
+      (async () => {
+        try {
+          const ras = await prisma.rA.findMany({
+            take: 50, // Get more to filter
+            include: {
+              school: true,
+              _count: {
+                select: { reviews: { where: { status: 'ACTIVE' } } },
+              },
+            },
+          });
+          // Sort by review count and take top 10
+          return ras
+            .sort((a, b) => (b._count?.reviews || 0) - (a._count?.reviews || 0))
+            .slice(0, 10);
+        } catch (err) {
+          console.error('Error fetching top RAs:', err);
+          return [];
+        }
+      })(),
       // Daily growth data (simplified - get counts per day)
       (async () => {
         try {
@@ -875,31 +888,42 @@ router.get('/analytics', async (req, res, next) => {
     ]);
 
     // Get school names for reviews by school
-    const schoolIds = reviewsBySchool.map(item => item.schoolId);
-    const schools = await prisma.school.findMany({
-      where: { id: { in: schoolIds } },
-      select: { id: true, name: true },
-    });
-    const schoolMap = new Map(schools.map(s => [s.id, s.name]));
+    const reviewsBySchoolArray = Array.isArray(reviewsBySchool) ? reviewsBySchool : [];
+    const schoolIds = reviewsBySchoolArray.map(item => item.schoolId).filter(Boolean);
+    let reviewsBySchoolFormatted = [];
+    
+    if (schoolIds.length > 0) {
+      try {
+        const schools = await prisma.school.findMany({
+          where: { id: { in: schoolIds } },
+          select: { id: true, name: true },
+        });
+        const schoolMap = new Map(schools.map(s => [s.id, s.name]));
 
-    const reviewsBySchoolFormatted = reviewsBySchool
-      .map(item => ({
-        schoolId: item.schoolId,
-        schoolName: schoolMap.get(item.schoolId) || 'Unknown',
-        reviewCount: item._count.reviews,
-      }))
-      .sort((a, b) => b.reviewCount - a.reviewCount)
-      .slice(0, 20);
+        reviewsBySchoolFormatted = reviewsBySchoolArray
+          .map(item => ({
+            schoolId: item.schoolId,
+            schoolName: schoolMap.get(item.schoolId) || 'Unknown',
+            reviewCount: item._count?.reviews || 0,
+          }))
+          .sort((a, b) => b.reviewCount - a.reviewCount)
+          .slice(0, 20);
+      } catch (err) {
+        console.error('Error formatting reviews by school:', err);
+        reviewsBySchoolFormatted = [];
+      }
+    }
 
     // Format top RAs
-    const topRAsFormatted = topRAs
-      .filter(ra => ra._count.reviews > 0)
+    const topRAsArray = Array.isArray(topRAs) ? topRAs : [];
+    const topRAsFormatted = topRAsArray
+      .filter(ra => (ra._count?.reviews || 0) > 0)
       .map(ra => ({
         id: ra.id,
         firstName: ra.firstName,
         lastName: ra.lastName,
-        school: ra.school.name,
-        reviewCount: ra._count.reviews,
+        school: ra.school?.name || 'Unknown',
+        reviewCount: ra._count?.reviews || 0,
       }));
 
     // Format views by state (handle case where viewsByState might be empty or undefined)
